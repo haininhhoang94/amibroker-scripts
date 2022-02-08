@@ -1,0 +1,63 @@
+_SECTION_BEGIN("Bollinger Band Trend Filter");
+
+ST_TR=EMA(C,5);
+MID_TR=EMA(C,10);
+INT_TR=EMA(C,15);
+LNG_TR=EMA(C,20);
+
+ST_VAL = IIf(ST_TR > BBandTop(C,15,0.5),1, IIf(ST_TR<BBandTop(C,15,0.5) AND ST_TR>BBandBot(C,15,0.5),0,-1));
+MID_VAL = IIf(MID_TR > BBandTop(C,20,0.5),1, IIf(MID_TR<BBandTop(C,20,0.5) AND MID_TR>BBandBot(C,20,0.5),0,-1));
+Int_VAL = IIf(INT_TR > BBandTop(C,30,0.5),1, IIf(INT_TR<BBandTop(C,30,0.5) AND INT_TR>BBandBot(C,30,0.5),0,-1));
+LNG_VAL = IIf(LNG_TR > BBandTop(C,50,0.5),1, IIf(LNG_TR<BBandTop(C,50,0.5) AND LNG_TR>BBandBot(C,50,0.5),0,-1));
+
+ST_TF = ST_VAL*10;
+MID_TF = MID_VAL*20;
+INT_TF = Int_VAL*30;
+LNG_TF = LNG_VAL*40;
+
+
+TF= ST_TF + MID_TF + INT_TF + LNG_TF;
+
+// TREND FILTER RANKING
+TFRNK = 
+IIf(TF>= 50,3,
+IIf(TF<50 AND TF>25,2,
+IIf(TF<25 AND TF>=0,1,
+IIf(TF<0 AND TF>= -25,-1,
+IIf(TF<-25 AND TF>=-50,-2,
+IIf(TF<-50,-3,0))))));
+
+TFCLR = 
+IIf(TFRNK==3,ColorRGB(0,255,0),
+IIf(TFRNK==2,Colorgreen,
+IIf(TFRNK==1,colorYELLOW,
+IIf(TFRNK==-1,ColorRGB(252,70,0),
+IIf(TFRNK==-2,ColorRGB(255,80,80),
+IIf(TFRNK==-3,ColorRGB(217,0,0),colorGrey40))))));
+
+// PRICE PLOT
+
+Plot(TFRNK,"BB TREND FILTER",TFCLR ,styleLINE);
+Plot (0,"",colorGrey50,styleLine);
+Plot (-.5,"",colorGrey50,styleDashed);
+Plot (0.5,"",colorGrey50,styledashed);
+
+ExpectedLengthOfUpTrend = Param("Expected length of up trend", 30, 5, 200, 1);
+ExpectedLengthOfDownTrend = Param("Expected length of down trend", 30, 5, 200, 1);
+Buy = MA(TFRNK, ExpectedLengthOfDownTrend/2)==-3 AND TFRNK == -3;
+Sell = MA(TFRNK, ExpectedLengthOfUpTrend/2)==3 AND TFRNK == 3;
+
+	
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+	 
+PlotShapes( IIF( buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, yposition = TFRNK); 
+PlotShapes( IIF( sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, yposition = TFRNK); 
+
+Filter = V>MA(V,5)*1.15 AND V>50000;
+
+AddTextColumn( FullName(), "Full name", 77 , colorDefault );
+AddColumn( TFRNK, "TREND FILTER RANKING", 1.2, TFCLR, colorBlack );
+AddColumn(C, "Price", 1.2);
+AddColumn(ROC(C,1) , "Price Change (%)", 1.2, IIf(ROC(C,1)>0, colorGreen, IIf(ROC(C,1)<0, colorRed, colorBlack)));
+AddColumn(V, "Volume", 1.2);

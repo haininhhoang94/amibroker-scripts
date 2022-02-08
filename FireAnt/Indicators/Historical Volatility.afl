@@ -1,0 +1,20 @@
+_SECTION_BEGIN("Historical Volatility");
+if (Nz(VarGet("runonce_HistoricalVolatility")) == 0) {
+VarSet("runonce_HistoricalVolatility",1);
+
+RequestTimedRefresh( 1 );
+SetChartOptions( Mode = 0, Flags = 0, gridFlags = chartGridMiddle | chartGridPercent, ymin = 0, ymax = 0, blankbars = 0 );
+
+
+PC = StaticVarGet("PC" );
+PC = IIf(IsNull(PC), C, PC);
+
+HVPeriod = Param("HV Period",21,5,252,1);
+HV = StDev(log(PC/Ref(PC,-1)),HVPeriod, False)*sqrt(252)*100;
+
+
+Plot( HV , "HV % ("+HVPeriod+")", ParamColor( "Color", colorRed ), StyleLine);
+
+}
+
+_SECTION_END();

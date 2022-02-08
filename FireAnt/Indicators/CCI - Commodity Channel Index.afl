@@ -1,0 +1,32 @@
+_SECTION_BEGIN("CCI");
+if (Nz(VarGet("runonce_CCI")) == 0) {
+VarSet("runonce_CCI",1);
+RequestTimedRefresh( 1 );
+periods = Param( "Periods", 14, 2, 200, 1 );
+
+OBSPeriods = Param( "Observation Periods", 40, 20, 200, 1 );
+OVM = Param( "OS and OB Margin", 0.8, 0.7, 2, 0.1 );
+
+PTypical = StaticVarGet("PTypical" );
+PTypical = IIf(IsNull(PTypical), Avg, PTypical);
+
+CCIValue = FA_CCI( periods);
+CCIValueAdj = CCIValue -50;
+Plot( CCIValue , "CCI", ParamColor( "Color", colorCycle ), ParamStyle("Style")  );
+OB = OVM *HHV(CCIValueAdj ,OBSPeriods ) + 50;
+Plot(OB,"OverBought", colorYellow,styleLine);
+OS = OVM *LLV(CCIValueAdj ,OBSPeriods )+50;
+Plot(OS,"OverSold", colorYellow,styleLine);
+Middle = (HHV(CCIValueAdj,OBSPeriods )+LLV(CCIValueAdj,OBSPeriods ))/2+50;
+Plot(Middle,"NEUTRAL", colorYellow,styleLine);
+
+Buy = Cross(CCIValue, OS);
+Sell = Cross(OB, CCIValue);
+Buy = ExRemSpan(Buy, 5);
+Sell = ExRemSpan(Sell, 5);
+
+shape = Buy * shapeUpArrow + Sell * shapeDownArrow; 
+
+PlotShapes( shape, IIf( Buy, colorGreen, colorRed ) );
+}
+_SECTION_END();

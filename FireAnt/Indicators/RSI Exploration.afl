@@ -1,0 +1,131 @@
+_SECTION_BEGIN("KENH RSI");
+H=L=C=RSI(14); 
+Plot( Close, "Close", colorWhite, 4 ); 
+SECUpColor=ParamColor("SEC-UpColor",colorBrightGreen); 
+SECDnColor=ParamColor("SEC-DownColor",colorRed); 
+SECLastColor=ParamColor("SEC-LastColor",colorCustom8); 
+BckGndColor=ParamColor("BackGroundColor",GetChartBkColor() - 56); 
+ZZSwitch=Param("ZZSwitch",0,0,1,1); 
+Sens=Param("LOAI RSI",35,0.5,100,0.5); 
+ 
+BarPK=BarsSince(Zig(C,Sens)==Peak(C,Sens)); 
+BarTGH= BarsSince(Zig(C,Sens)==Trough(C,Sens)); 
+Turnpoint=Min(BarPK,BarTGH); 
+x = Cum(1); 
+lastx = ValueWhen(Turnpoint==0,( x )); 
+Daysback = ValueWhen(Turnpoint==0,(Max(PeakBars(C,Sens,1),TroughBars(C,Sens,1))))+1; 
+ 
+aa =ValueWhen(Turnpoint==0,LinRegIntercept( Close, Daysback) ); 
+bb =ValueWhen(Turnpoint==0,LinRegSlope( Close, Daysback)); 
+y = Aa + bb * ( x - (Lastx - DaysBack+1) ); 
+ 
+e= ValueWhen(Turnpoint==0,StdErr(C,Daysback)); 
+eU= y + 2*e; 
+eL= y - 2*e; 
+ 
+//Color=IIf(Cross(bb,0) OR Cross(0,bb),BckGndColor,IIf(bb<0,SECDnColor,SECUpColor)); 
+//Plot( IIf( x >= (lastx - Daysback), IIf( Ref(C,-1) <eU AND Ref(C,-1) >eL,y,Null) , -1e10 ) , "LinReg", color,4 ); 
+//Plot(IIf( x >= (lastx - Daysback), IIf( Ref(C,-1) <eU AND Ref(C,-1) >eL,eU,Null) , -1e10 ) ,"",color,4); 
+//Plot(IIf( x >= (lastx - Daysback), IIf( Ref(C,-1) <eU AND Ref(C,-1) >eL,eL,Null) , -1e10 ) ,"",color,4); 
+ 
+
+
+Buy = Cross(C,eU);
+Sell = Cross(eL,C);
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+
+PlotShapes(shapeUpArrow*Buy,colorGreen,C,25,Offset=0); 
+PlotShapes(shapeDownArrow*Sell,colorRed,C,75,Offset=0); 
+
+_SECTION_BEGIN("Filter");
+AddColumn(V,"Volume",1.0);
+BuyChannel = Cross(C,eU);
+SellChannel = Cross(eL,C);
+AddColumn(BuyChannel,"Buy Signal",True, colorcustom2,colorcustom8);
+AddColumn(SellChannel,"Sell Signal",True, colorcustom2,colorCustom5);
+Filter = BuyChannel OR SellChannel;
+_SECTION_END();
+DaysbackL = LastValue(Min(PeakBars(C,Sens,1),TroughBars(C,Sens,1))); 
+//MIDDLE SEC// 
+Slope= ValueWhen(Turnpoint==0,bb,0); 
+Level= ValueWhen(Turnpoint==0,aa,0); 
+Err= ValueWhen(Turnpoint==0,e,0); 
+Mback= Level + slope*( Turnpoint) ; 
+Uback= MBack + 2*Err; 
+Lback= MBack - 2*Err; 
+
+color2=IIf(Cross(bb,0) OR Cross(0,bb),BckGndColor,IIf(bb<0,SECUpColor,SECDnColor)); 
+
+Plot( IIf( (X>(LastValue(x)-DaysbackL) ),Null ,Mback) ,"",color2,4); 
+Plot( IIf( (X>(LastValue(x)-DaysbackL) ),Null ,Uback) ,"",color2,4); 
+Plot( IIf( (X>(LastValue(x)-DaysbackL) ),Null ,Lback) ,"",color2,4); 
+
+///////Last SEC/////////////////// 
+x = Cum(1); 
+lastxL = LastValue( x ); 
+DaysbackL = LastValue(Min(PeakBars(C,Sens,1),TroughBars(C,Sens,1)))+1; 
+Endbars = IIf(PeakBars(C,Sens,1)<TroughBars(C,Sens,1),LastValue(ValueWhen(C==LLV(C,DaysbackL),X)),LastValue(ValueWhen( C==HHV(C,DaysbackL),X))); 
+BarsL=Min(PeakBars(C,Sens,1),TroughBars(C,Sens,1)) ; 
+ 
+aaL = ValueWhen( Ref(Endbars,-1)!=Ref(x,-1) AND Endbars==x , LinRegIntercept( Close, DaysbackL-(LastValue(x)-Endbars)) ); 
+bbL = ValueWhen( Ref(Endbars,-1)!=Ref(x,-1) AND Endbars==x , LinRegSlope( Close, DaysbackL-(LastValue(x)-Endbars)) ); 
+eL= ValueWhen( Ref(Endbars,-1)!=Ref(x,-1) AND Endbars==x , StdErr(C,DaysbackL-(LastValue(x)-Endbars)) ); 
+SlopeL= LastValue(bbL); 
+LevelL= LastValue(aaL); 
+ErrL= LastValue(eL); 
+ 
+MbackL= LevelL + slopeL*( BarsL) ; 
+UbackL= MBackL + 2*ErrL; 
+LbackL= MBackL - 2*ErrL; 
+WL=(UbackL-LbackL)/sqrt((SlopeL*SlopeL)+1); 
+ 
+Plot( IIf(X>(LastValue(x)-DaysbackL) ,MbackL,Null) ,"",SECLastColor,4+styleNoLabel); 
+Plot( IIf(X>(LastValue(x)-DaysbackL),UbackL,Null) ,"",SECLastColor,4+styleNoLabel); 
+Plot( IIf(X>(LastValue(x)-DaysbackL),LbackL,Null) ,"",SECLastColor,4+styleNoLabel); 
+ 
+//PlotShapes( IIf(X>(LastValue(x)-DaysbackL),shapeHollowUpArrow*Cross(C,UbackL) ,Null),SECLastColor,0,25,Offset=-0); 
+//PlotShapes( IIf(X>(LastValue(x)-DaysbackL),shapeHollowDownArrow*Cross(LbackL,C) ,Null),colorOrange,75,Offset=-0); 
+ 
+//Plot( Close, "Close", colorWhite, 4 ); 
+Plot(30,"",10 ,4+styleThick|styleDashed); 
+Plot(50,"",10 ,4+styleThick|styleDashed); 
+Plot(70,"",10 ,4+styleThick|styleDashed); 
+//Plot(Zig(C,Sens),"",IIf(ZZSwitch==1,colorSkyblue,BckGndColor),8+styleNoLabel); 
+//Change=C-Ref(C,-1); 
+ dist = 1.7*ATR(1);
+ /* for( i = 0; i < BarCount; i++ )
+{
+if( Buy[i] ) PlotText( "MUA", i, L[ i ]-25, colorGreen,colorYellow );
+if( Sell[i] ) PlotText( "BAN", i, H[ i ]+25, colorRed, colorYellow );
+} */
+_SECTION_BEGIN("Magnified Market Price");
+FS=Param("Font Size",35,11,100,1);
+GfxSelectFont("Times New Roman", 34, 700, italic = True, underline = False, True );
+GfxSetBkMode( colorWhite );
+GfxSetTextColor( ParamColor("Color",colorCustom9) );
+Hor=Param("Horizontal Position",234,1,1200,1);
+Ver=Param("Vertical Position",1,1,1,1);
+GfxTextOut(""+C,Hor-150 , Ver+30 );
+GfxTextOut( Name(), Hor,Ver-50 );
+YC=TimeFrameGetPrice("C",inDaily,-1);
+DD=Prec(C-YC,2);
+xx=Prec((DD/YC)*100,2);
+GfxSelectFont("Times New Roman", 14, 700, italic =True, underline = False, True );
+GfxSetBkMode( colorWhite );
+GfxSetTextColor(ParamColor("Color",colorCustom9) );
+GfxTextOut(""+DD+" ("+xx+"%)", Hor-150, Ver+85 );
+GfxSelectFont("arial", 18 );
+GfxSetTextColor(ParamColor("dong",colorCustom8) );
+GfxSetTextAlign( 6 );// center alignment
+GfxSetTextColor( colorYellow );
+GfxSetBkMode(0); // transparent
+GfxSelectFont("Times New Roman", Status("pxheight")/26 );
+GfxTextOut( "RSI Channel", Status("pxwidth")/2, Status("pxheight")/18 );
+GfxSelectFont("Times New Roman", Status("pxheight")/36 );
+GfxSetTextColor( colorLightGrey );
+GfxSelectFont("Times New Roman", Status("pxheight")/46 );
+GfxTextOut( FullName() , Status("pxwidth")/1.2, Status("pxheight")/9 );
+GfxTextOut( "("+Name()+") " , Status("pxwidth")/1.2, Status("pxheight")/7 );
+
+_SECTION_END();

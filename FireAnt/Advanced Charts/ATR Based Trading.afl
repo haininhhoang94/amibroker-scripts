@@ -1,0 +1,122 @@
+#include_once <FireAnt.h>
+
+_SECTION_BEGIN("Price");
+if (Nz(VarGet("runonce_Basic")) == 0) {
+VarSet("runonce_Basic",1);
+CellHeight = Param("Cell Height",20,5,200,1); 
+CellWidth = Param("Cell Width",120,5,200,1); 
+PanelYoffset = Param("Cell Row Offset (px)",15,0,Status("pxheight"),1); 
+PanelXoffset = Param("Cell Column Offset (px)",10,0,Status("pxwidth"),1); 
+FontRatio = Param("Font: CellHeight ratio",2,1,20,0.1);
+Triger =1;
+
+
+Column_Begin( "1");
+Triger = TriggerCell( "TEST MODUS OFF", "TEST MODUS ON", colorRed, colorBrightGreen, colorBlack);
+Column_End( );
+
+TestModus = Nz(StaticVarGet("TestModus"), OFF);
+
+TP = LastValue(C);
+PV = StaticVarGet("PV");
+PV = IIf(IsNull(PV), V, PV);
+
+if (Triger == 0) 
+{
+	if ( GetCursorMouseButtons() & 9 ) 
+	{ 
+		TP = Nz(GetCursorYPosition(),Nz(StaticVarGet("TestPrice"),LastValue(C)));
+
+		StaticVarSet("TestPrice", TP);
+	}
+	else { 
+		TP = Nz(StaticVarGet("TestPrice"),LastValue(C));
+	}
+}
+else
+	TP = LastValue(C); 
+
+if (TestModus==OFF) {
+	TP = LastValue(C);
+	PC = C;
+	PH = H;
+	PL = L;
+	PTypical = Avg;
+}
+else {
+	PC = FA_Price(3);
+	PH = FA_Price(1);
+	PL = FA_Price(2);
+	PTypical = FA_Price(5);
+}
+
+StaticVarSet("TP", TP );
+StaticVarSet("PC", PC );
+StaticVarSet("PL", PL );
+StaticVarSet("PH", PH );
+StaticVarSet("PTypical", PTypical);
+
+SetChartOptions(0,chartShowArrows|chartShowDates);
+
+
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) Vol " +WriteVal( PV, 1.0 ) +" {{VALUES}}", O, PH, PL, PC, SelectedValue( ROC( PC, 1 )) ));
+
+PriceStyle = GetPriceStyle();
+PriceStyleOpt = ParamStyle("Price Style")|PriceStyle;
+
+if (PriceStyle==styleCandle)
+	Plot( PC, "", colorDefault, styleNoTitle | PriceStyleOpt ); 
+else
+	Plot( PC, "", IIf( PC >= Ref(PC, -1), colorGreen, colorRed ), PriceStyleOpt);
+
+}
+
+_SECTION_END();
+
+
+_SECTION_BEGIN( "Strategy" );
+ATRV = ATR( 14 );
+MAPeriod = Param("MA Period", 50, 20, 200, 1);
+ATRFator = Param("ATR Factor", 1, 1, 5, 0.1);
+ATRYC = ATRV*ATRFator*MA(PC,MAPeriod)/PC; 
+NewDay = ( Day() != Ref( Day(), -1 ) ) OR BarIndex() == 0;
+
+FirstBarTime = ValueWhen( NewDay, TimeNum(), 1 );
+
+FCD = ValueWhen( NewDay, PC, 1 );
+
+H1 = FCD + ATRYC;
+
+L1 = FCD - ATRYC;
+
+
+LVLS = ParamToggle( "ATR Bands", "Show|Hide", 0 );
+
+if( LVLS == 1 )
+{
+    Plot( FCD, "", colorYellow, styleDots | styleLine | styleNoRescale | styleNoTitle );
+    Plot( H1, "", colorPink, styleDots | styleLine | styleNoRescale | styleNoTitle );
+    Plot( L1, "", colorBlue, styleDots | styleLine | styleNoRescale | styleNoTitle );
+}
+
+COND1 = Ref( L, -1 ) < L1 AND Ref( H, -1 ) > L1;
+
+COND10 = Ref( L, -1 ) < H1 AND Ref( H, -1 ) > H1;
+
+
+BCOND = Ref(C, -1) > Ref(O, -1) AND (COND1 OR COND10);
+
+SCOND = Ref(C, -1) < Ref(O, -1) AND (COND1 OR COND10);
+
+
+Buy = PC > Ref( H, -1 ) AND BCOND; //AND (TimeNum() >= FirstTradeTime AND TimeNum() <= LastTradeTime );
+Sell = PC < Ref( L, -1 ) AND SCOND; // AND (TimeNum() >= FirstTradeTime AND TimeNum() <= LastTradeTime );
+
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+ 
+
+PlotShapes( IIF( Buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, PL); 
+PlotShapes( IIF( Sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, PH);  
+
+_SECTION_END();

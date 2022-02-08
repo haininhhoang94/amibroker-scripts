@@ -1,0 +1,20 @@
+"Date="+Date();
+Entry=ParamField("Entry",3);
+StopLoss=Entry-((Entry/100)*Param("StopLoss%",10));
+Target=Entry+((Entry/100)*Param("Target%",15));
+"Entry="+WriteVal(Entry);
+"StopLoss="+WriteVal(StopLoss);
+"Target="+WriteVal(Target);
+Risk=(Entry-StopLoss);
+RiskPer=((Entry-StopLoss)/Entry)*100;
+"Risk%="+WriteVal(RiskPer);
+Profit=(Target-Entry);
+ProfitPer=((Target-Entry)/Entry)*100;
+"Profit%="+WriteVal(ProfitPer);
+RRR=(Profit/Risk);
+"RRRatio="+WriteVal(RRR); 
+
+Plot(C, "", colorBrightGreen, styleCandle);
+Plot(SelectedValue(Entry),"Entry",colorYellow,styleDashed); 
+Plot(SelectedValue(StopLoss),"StopLoss",colorRed,styleDashed); 
+Plot(SelectedValue(Target),"Target",colorGreen,styleDashed); 

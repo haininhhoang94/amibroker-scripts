@@ -1,0 +1,52 @@
+_SECTION_BEGIN("Klinger Volume Oscillator");
+// Klinger oscillator indicator 
+shortPeriod = Param("KVO Short Period",34,5,300,1);
+longPeriod = Param("KVO Long Period",55,5,300,1); 
+signalPeriod = Param("Signal Period",20,5,300,1); 
+hlc      = High + Low + Close; 
+dm       = High - Low; 
+cm       = 0; 
+trend    = 0; 
+
+for( i = 1; i < BarCount; i++ ) 
+{ 
+   newtrend = trend; 
+   if (hlc[i] > hlc[i-1]) 
+      newtrend = 1; 
+   if (hlc[i] < hlc[i-1]) 
+      newtrend = -1; 
+   if (trend == newtrend) 
+   { 
+      cm       = cm + dm[i]; 
+   } 
+   else 
+   { 
+      cm       = dm[i-1] + dm[i]; 
+      trend    = newtrend; 
+   } 
+   if (cm == 0) 
+   { 
+      vf[i] = 0; 
+   } 
+   else 
+   { 
+      vf[i] = Volume[i] * abs(2*((dm[i]/cm)-1)) * trend/10000; 
+   } 
+} 
+
+kvo    = EMA(vf, shortPeriod) - EMA(vf, longPeriod); 
+kvosig = EMA(kvo, signalPeriod); 
+//kvosighedge = EMA(Ref(kvo,-3), signal_period); 
+Plot(kvo,"Klinger Osc.",colorRed, styleLine); 
+Plot(kvosig,"Klinger Osc. Signal",colorBlue, styleLine); 
+//Plot(kvosighedge,"hedge",colorGreen, styleLine); 
+
+Buy = Cross(kvo, kvosig) ;
+Sell = Cross(kvosig, kvo) ;
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+ 
+
+PlotShapes( IIF( buy, shapeUpArrow, shapeNone ), colorGreen , layer = 0, yposition = graph1); 
+PlotShapes( IIF( sell, shapeDownArrow, shapeNone ), colorRed ); 
+_SECTION_END();

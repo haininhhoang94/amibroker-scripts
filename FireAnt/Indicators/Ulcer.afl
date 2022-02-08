@@ -1,0 +1,17 @@
+// Downloaded From https://www.WiseStockTrader.com
+_SECTION_BEGIN(" Ulcer Index ");
+
+//https://www.tradingview.com/script/QuqgdJgF-Indicator-Ulcer-Index/
+// Credits : LazyBear - TradingView.
+
+length = Param( "Length", 10, 1, 5000, 1 );
+cutoff = Param( "Cut off", 5, 0, 100, 0.1 );
+
+hcl=hhv(close,length);
+r=100.0*((close-hcl)/hcl);
+ui=sqrt(sum(r^2, length)/length);
+col=IIf(ui>cutoff,colorRed,colorAqua);
+Plot( ui, "Ulcer Index ("+length+","+cutoff+") ", col);
+Plotgrid(cutoff,colorBlack,9, 1);
+
+_SECTION_END();

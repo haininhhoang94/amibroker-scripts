@@ -1,0 +1,96 @@
+//SetChartBkColor(ParamColor("Panel Color",colorBlack));
+//SetChartBkGradientFill(ParamColor("Upper Chart",colorBlack),ParamColor("Lower Chart",colorBlack));
+_SECTION_BEGIN("Stochastic %D");
+
+
+periods = Param( "Periods", 8, 1, 200, 1 );
+Ksmooth = Param( "%K avg", 3, 1, 200, 1 );
+Dsmooth = Param( "%D avg", 4, 1, 200, 1 );
+
+k = StochK( periods , Ksmooth);
+d = StochD( periods , Ksmooth, DSmooth );
+
+
+Buy=K>D AND C>O AND Cross(C,MA(C,15));
+Sell= D>K AND C<O AND Cross(MA(C,15), C);
+
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+ 
+
+PlotShapes(0.4*shapeUpTriangle*Buy, colorGreen, 0, d, -15 );
+PlotShapes(0.4*shapeDownTriangle*Sell, colorYellow, 0, d, -15);
+
+//TH5=k-d;
+Hi = IIf(k > d, k, d);
+Lo = IIf(k < d, k, d);
+
+COLOR = IIf(d > k, 15, 14);
+//COLOR = IIf(K > D AND (K > 80 OR D > 80) OR D > K AND (K < 20 OR D <20), colorLightGrey, COLOR);
+
+PlotOHLC(Lo,Hi,Lo,Hi,"",COLOR, styleNoLabel | styleCloud);
+
+_SECTION_END();
+
+/*_SECTION_BEGIN("Stochastic_15_MINS");
+periods = Param( "Periods", 8, 1, 200, 1 );
+Ksmooth = Param( "%K avg", 3, 1, 200, 1 );
+Dsmooth = Param( "%D avg", 4, 1, 200, 1 );
+
+TimeFrameSet(in1Minute * 15);
+k15 = StochK( periods , Ksmooth);
+d15 = StochD( periods , Ksmooth, DSmooth );
+//TH15=k15-d15;
+TimeFrameRestore();
+
+K = TimeFrameExpand(k15, in1Minute * 15);
+D = TimeFrameExpand(d15, in1Minute * 15);
+TH15=k-d;
+Hi = IIf(k > d, k, d);
+Lo = IIf(k < d, k, d);
+COLOR = IIf(Ref(d,1) > Ref(k,1), colorRed, colorGreen);
+COLOR = IIf(K > D AND (K > 80 OR D > 80) OR D > K AND (K < 20 OR D <20), colorLightGrey, COLOR);
+
+PlotOHLC(Lo,Hi,Lo,Hi,"",COLOR, styleNoLabel | styleCloud);
+
+Plot(D, "Stoch Orange-Light Blue D15", colorBlack, styleThick );
+Plot(K, "Stoch K15", colorBlack, styleThick );
+
+_SECTION_END();
+
+_SECTION_BEGIN("Stochastic_30_MINS");
+periods = Param( "Periods", 8, 1, 200, 1 );
+Ksmooth = Param( "%K avg", 3, 1, 200, 1 );
+Dsmooth = Param( "%D avg", 4, 1, 200, 1 );
+
+TimeFrameSet(in1Minute * 30);
+k30 = StochK( periods , Ksmooth);
+d30 = StochD( periods , Ksmooth, DSmooth );
+
+TimeFrameRestore();
+
+K = TimeFrameExpand(k30, in1Minute * 30);
+D = TimeFrameExpand(d30, in1Minute * 30);
+myStochK=StochK( periods , Ksmooth);
+myStochD=StochD( periods , Ksmooth, DSmooth );
+TH30=k-d;// >0 up; < down
+Buy30P=Cross(K, D ) ;
+Sell30P= Cross(D, K )  ;
+
+PlotShapes( 1*shapeUpArrow*Buy30P, colorBlue, 0, 0, 0 );
+PlotShapes(1* shapeDownArrow*sell30P, colorRed, 0, 92,0);
+
+AlertIf( Buy30P, "SOUND C:\\A_better_day.WAV", "Audio alert",1);
+AlertIf( Sell30P, "SOUND C:\\A_better_day.WAV", "Audio alert", 2);
+
+Plot(D, "Stoch Red-Blue D30", colorRed, styleThick );
+Plot(K, "Stoch K30", colorGreen, styleThick );
+
+Hi = IIf(k > d, k, d);
+Lo = IIf(k < d, k, d);
+
+COLOR = IIf(Ref(d,1) > Ref(k,1), colorOrange, colorLightBlue);
+COLOR = IIf(K > D AND (K > 80 OR D > 80) OR D > K AND (K < 20 OR D <20), colorLightGrey, COLOR);
+
+PlotOHLC(Lo,Hi,Lo,Hi,"",COLOR, styleNoLabel | styleCloud);
+_SECTION_END(); */

@@ -1,0 +1,22 @@
+_SECTION_BEGIN("TEMA Cross Over");
+
+r1= Param("Short TEMA", 15, 5, 50, 1, 0);
+r2= Param("Long TEMA", 45, 15, 200, 1, 0);
+
+Plot (C, "Close", colorBrightGreen, styleCandle);
+
+shortTEMA = TEMA(C, r1);
+longTEMA = TEMA(C, r2);
+
+Plot(shortTEMA, StrFormat(_SECTION_NAME()+"(%g)", r1), colorRed, styleLine);
+Plot(longTEMA, StrFormat(_SECTION_NAME()+"(%g)", r2), colorBlue, styleLine);
+
+Buy=Cross(shortTEMA, longTEMA);
+Sell=Cross(longTEMA, shortTEMA);
+Buy=ExRem(Buy,Sell);
+Sell=ExRem(Sell,Buy);
+
+PlotShapes(IIf(Buy, shapeUpArrow, shapeNone),colorBlue, 0, shortTEMA, Offset=-20);
+PlotShapes(IIf(Sell, shapeDownArrow, shapeNone),colorOrange, 0, longTEMA, Offset=-20);
+
+_SECTION_END();

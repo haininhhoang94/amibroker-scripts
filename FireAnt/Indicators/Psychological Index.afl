@@ -1,0 +1,11 @@
+// Downloaded From https://www.WiseStockTrader.com
+_SECTION_BEGIN("Hungkisvn_EOD PsychIndex");
+LookBack= Param("Number of lookback periods",12, 2, 100);
+UThreshold= Param("Upper threshold (%)",75, 0, 100);
+LThreshold= Param("Lower threshold (%)", 25,0, 100);
+UpDay= Close > Ref(Close,-1);
+PsychIndex= 100*Sum(UpDay,LookBack) / LookBack;
+Plot(PsychIndex,_DEFAULT_NAME(),ParamColor("Color",colorRed), ParamStyle("Style",styleLine));
+Plot(UThreshold,"75",colorBlack,styleDashed|styleNoTitle); 
+Plot(LThreshold,"25",colorBlack,styleDashed|styleNoTitle);
+_SECTION_END();

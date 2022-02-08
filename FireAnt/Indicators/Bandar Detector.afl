@@ -1,0 +1,21 @@
+_SECTION_BEGIN("Bandar Detector");
+if (Nz(VarGet("runonce_BandarDetector")) == 0) {
+	VarSet("runonce_BandarDetector",1);
+	RequestTimedRefresh( 1 );
+	PC = StaticVarGet("PC" );
+	PC = IIf(IsNull(PC), C, PC);
+	PV = StaticVarGet("PV" );
+	PV = IIf(IsNull(PV), V, PV);
+
+	BDIn = IIf(PC>O,PV,0); 
+	BDOut = IIf(PC<O,PV,0);
+	Period = Param("Bandar Period", 5, 3, 200,1,0);
+	BDAcc = Sum(BDIn, Period); 
+	BDDist = Sum(BDout,Period); 
+	BD = BDAcc- BDDist;
+
+	ColorBD=IIf( BD>O, colorBrightGreen ,colorRed) ;
+
+	Plot(BD, "Bandar Detector Monthly",colorBD, styleHistogram| styleThick) ;
+}
+_SECTION_END();

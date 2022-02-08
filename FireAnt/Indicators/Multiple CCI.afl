@@ -1,0 +1,87 @@
+_SECTION_BEGIN("Multiple CCI");
+if (Nz(VarGet("runonce_MultipleCCI")) == 0) {
+VarSet("runonce_MultipleCCI",1);
+
+RequestTimedRefresh( 1 );
+
+PTypical = StaticVarGet("PTypical" );
+
+CCI_OVERSOLD = Param( "Oversold", -100 );
+CCI_OVERBOUGHT = Param( "Overbought", 100 );
+
+rulesExtendedZone = ParamList( "Extended Zone", "Enable|Disable", 1 );
+CCI_OVERSOLD2 = Param( "Lower Oversold", -200 );
+CCI_OVERBOUGHT2 = Param( "High Overbought", 200 );
+
+
+rulesCCI1 = ParamList( "Short CCI Toggle", "Enable|Disable", 1 );
+Short_Period = Param( "Short CCI Period", 9, 5, 10, 1 );
+Short_CCI_Color = ParamColor( "Short CCI Color",  colorYellow );
+
+rulesCCI2 = ParamList( "Middle CCI Toggle", "Enable|Disable", 0 );
+Middle_Period = Param( "Middle CCI Period", 14, 10, 20, 1 );
+Middle_CCI_Color = ParamColor( "Middle CCI Color",  colorGreen );
+
+rulesCCI3 = ParamList( "Long CCI Toggle", "Enable|Disable", 1 );
+Long_Period = Param( "Long CCI Period", 29, 20, 50, 1 );
+Long_CCI_Color = ParamColor( "Long CCI Color",  colorRed ); 
+
+Plot( CCI_OVERSOLD, "", colorGreen, styleDashed );
+
+CCI_CenterLine = 0;
+Plot( CCI_CenterLine, "", colorWhite, styleDashed );
+
+
+Plot( CCI_OVERBOUGHT, "", colorRed, styleDashed );
+
+CombineCCI = 0;
+
+
+if( rulesExtendedZone == "Enable" )
+{  
+    Plot( CCI_OVERSOLD2, "", colorGreen, styleDashed );
+    Plot( CCI_OVERBOUGHT2, "", colorRed, styleDashed );
+}
+
+
+if( rulesCCI1 == "Enable" )
+{
+    
+    CC = FA_CCI( Short_Period );
+	CombineCCI = IIf (CombineCCI==0, CombineCCI + CC, (CombineCCI + CC)/2);
+    Plot( CC, "Short CCI", Short_CCI_Color);
+}
+
+
+if( rulesCCI2 == "Enable" )
+{
+    
+    CC = FA_CCI( Middle_Period );
+	CombineCCI = IIf (CombineCCI==0, CC, (CombineCCI + CC)/2);
+    Plot( CC, "Middle CCI",  Middle_CCI_Color);
+}
+
+
+if( rulesCCI3 == "Enable" )
+{
+    
+    CC = FA_CCI( Long_Period );
+	CombineCCI = IIf (CombineCCI==0, CombineCCI + CC, (CombineCCI + CC)/2);
+    Plot( CC, "Long CCI", Long_CCI_Color);
+}
+
+Plot( CombineCCI, "Combined CCI", ParamColor( "Combined CCI Color",  colorBlue ));
+
+Buy = Cross(CombineCCI,CCI_OVERSOLD);
+Sell = Cross(CCI_OVERBOUGHT, CombineCCI); 
+//Buy = ExRemSpan(Buy, 5);
+//Sell = ExRemSpan(Sell, 5);
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+ 
+
+PlotShapes( IIF( buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, yposition = CombineCCI); 
+PlotShapes( IIF( sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, yposition = CombineCCI); 
+}
+
+_SECTION_END();

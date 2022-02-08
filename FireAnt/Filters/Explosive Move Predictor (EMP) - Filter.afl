@@ -1,0 +1,11 @@
+EMP_1_Day=(HHV(H,1)-LLV(L,1))<(Ref(HHV(H,2), -1)-Ref(LLV(L,2), -1)) AND (HHV(H,1)-LLV(L,1))<(Ref(HHV(H,3), -2)-Ref(LLV(L,3), -2)) AND (HHV(H,1)-LLV(L,1))<(Ref(HHV(H,4), -3)-Ref(LLV(L,4), -3)) AND High<Ref(High,-1) AND Low>Ref(Low,-1) AND V>MA(V,5)*1.05 AND V>50000;
+EMP_1_DayCOLOR=IIf(EMP_1_Day,colorBrightGreen,colorWhite);
+
+Filter = EMP_1_Day;
+
+AddColumn(C,"Price",1.2);
+AddColumn(Ref(C,-1),"Previous Price",1.2);
+AddColumn(ROC(C, 1),"Change %",1.0);
+AddColumn(EMP_1_Day,"EMP_1_Day",1.0);
+AddColumn(V,"Volume",1.0);
+AddColumn(MA(V,5),"MA Vol 5D",1.0);

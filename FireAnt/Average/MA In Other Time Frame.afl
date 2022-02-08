@@ -1,0 +1,24 @@
+TimeFrameSet( in5Minute ); // switch to 5 minute frame
+
+/* MA now operates on 5 minute data, ma5_13 holds time-compressed 13 bar MA of 5min bars */
+
+PeriodIn5Min = Param("Period in 5 minutes timeframe", 13,5,200,1,0);
+
+Ma5Min = MA( C, PeriodIn5Min );
+
+TimeFrameRestore(); // restore time frame to original
+
+TimeFrameSet( inHourly ); // switch now to hourly
+
+PeriodInHour = Param("Period in 1 hour timeframe", 9,5,200,1,0);
+
+MaHour = EMA( C, PeriodInHour ); // 9 bar moving average from hourly data
+
+TimeFrameRestore(); // restore time frame to original
+
+Plot( Close, "Price", colorWhite, styleCandle );
+
+// plot expanded average
+
+Plot( TimeFrameExpand( Ma5Min, in5Minute), "13 bar moving average from 5 min bars", colorGreen );
+Plot( TimeFrameExpand( MaHour, inHourly), "9 bar moving average from hourly bars", colorRed );

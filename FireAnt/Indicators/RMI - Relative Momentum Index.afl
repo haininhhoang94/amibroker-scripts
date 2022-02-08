@@ -1,0 +1,79 @@
+/*
+The Relative Momentum Index (RMI) was developed by Roger Altman in 1993 as an attempt to improve the Relative Strength Index (RSI) by adding a component of momentum to the RSI. 
+The Relative Momentum Index uses change of closing price between the current bar and N bars before instead of 1-bar change in price.
+The Relative Momentum Index is calculated as ratio of the average upward changes to the average downward changes over a given period of bars. 
+Where each change is calculated for the given number of bars. It could be said that RSI is the RMI which uses a momentum period of 1 to receive individual changes.
+The same as with RSI, the RMI indicator moves in the range of 0 to 100; and the same as with RSI, the relative Momentum Index’s values above 70 and below 30 are considered as 
+an indication of overbought and oversold conditions respectfully.
+In technical analysis the RMI indicator is analyzed in the same way the RSI is. A simple trading system based on the RMI indicator would suggest buying when RMI values advance above 30 
+after being below it and it would suggest selling when RMI values drop below 70 after being above it.
+Since RMI readings above 50 are considered as bullish and RMI readings below 50 are considered as bearish, some traders may choose to generate signals on the crossovers of the RMI and 50 
+center line: sell when RMI decline below 50 and buy when RMI advances above 50.
+Third way of using the Relative Momentum Index involves Exponential MA applied to RMI and used as a signal line. In this case the RMI indicator consist of two lines: RMI itself and Signal 
+Line (EMA applied to the RMI). The signals are generated on the crossovers of the RMI and its Signal Line: sell when RMI drops below its Signals Line and buy when RMI raises above its 
+Signal Line.
+Divergence between RMI and price direction is also taken into consideration by many traders as an indication of the possibility of a reversal in the near future.
+*/
+_SECTION_BEGIN("Relative Momentum Index");
+if (Nz(VarGet("runonce_RelativeMomentumIndex")) == 0) {
+	VarSet("runonce_RelativeMomentumIndex",1);
+	RequestTimedRefresh( 1 );
+
+	PC = StaticVarGet("PC" );
+	PC = IIf(IsNull(PC), C, PC);
+
+	periods = Param( "Periods", 20, 1, 200, 1 );
+	momentum = Param( "Momentum", 2, 1, 200, 1 );
+	p1 = Param("Long Trend Periods", 25, 2, 300, 1, 10);
+	p2 = Param("Short Trend Periods", 5, 2, 300, 1, 10);
+	TL1 = LinearReg(PC, p1);
+	TL2 = EMA(TL1, p2);
+	z = RMI(periods, momentum) ;
+
+	Col1 = IIf(TL1 > TL2, ParamColor("Trend Up Colour", colorGreen), ParamColor("Trend Down Colour", colorRed));
+
+	Plot(z,"RMI", Col1, styleThick | styleNoLabel);
+
+	Overbought = Param( "Overbought", 70 );
+	Oversold = Param( "Oversold", 30 );
+
+	OverboughtColor = ParamColor("Overbought Color",colorDarkOliveGreen);
+	OversoldColor = ParamColor("Oversold Color",colorDarkRed);
+
+	Plot(Overbought,"", colorGreen, styleThick | styleDashed | styleNoLabel );
+	Plot(Oversold,"", colorRed, styleThick | styleDashed | styleNoLabel | styleNoDraw );
+	PlotOHLC(z,z,50,z,"",IIf(z>50, OverboughtColor, OversoldColor), styleCloud | styleNoLabel | styleClipMinMax, Oversold, Overbought );
+
+	PlotOHLC(30,30,50,50," ",colorPlum,styleCloud | styleNoLabel | styleNoTitle);
+	PlotOHLC(50,50,70,70," ",colorPaleTurquoise ,styleCloud | styleNoLabel | styleNoTitle);
+	
+	Choice = ParamList("Method", "OSOB|Middle|Signal", 0);
+	SigPerriod = Param("Signal Perriod", 5, 3, 100, 1, 0);
+	
+	if (Choice == "Middle") {
+		Buy = Cross(z,50);
+		Sell= Cross(50,z);
+	}
+	else if (Choice == "Signal") {
+		
+		Sig = EMA(z, SigPerriod);
+		Buy = Cross(z,Sig);
+		Sell= Cross(Sig,z);
+		Plot(Sig,"Signal", colorYellow, styleLine | styleNoLabel, null, Null, 0,5);
+	}
+	
+	else {
+		Buy = Cross(z,Oversold);
+		Sell= Cross(Overbought,z);
+	}
+	
+	
+	Buy = ExRem(Buy, Sell);
+	Sell = ExRem(Sell, Buy);
+
+	shape = Buy * shapeUpArrow + Sell * shapeDownArrow; 
+
+	PlotShapes( shape, IIf( Buy, colorGreen, colorRed ) );
+}
+
+_SECTION_END();

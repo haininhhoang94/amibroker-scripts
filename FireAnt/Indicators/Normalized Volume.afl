@@ -1,0 +1,45 @@
+#include_once <FireAnt.h>
+_SECTION_BEGIN("Volume");
+if (Nz(VarGet("runonce_Volume")) == 0) {
+VarSet("runonce_Volume",1);
+TestModus = Nz(StaticVarGet("TestModus"), OFF);
+printf("%f\n", TestModus );
+
+TV = LastValue(V);
+
+PC = StaticVarGet("PC");
+PC = IIf(IsNull(PC), C, PC);
+
+if ( GetCursorMouseButtons() & 9 ) 
+	{ 
+		TV = Nz(GetCursorYPosition(),Nz(StaticVarGet("TestVolume"),LastValue(V)));
+
+		StaticVarSet("TestVolume", TV);
+	}
+	else { 
+		TV = Nz(StaticVarGet("TestVolume"),LastValue(V));
+	}
+
+if (TestModus == OFF)
+	TV = LastValue(V);
+
+StaticVarSet("TV", TV);
+
+PV = FA_Price(4);
+PV = IIf(IsNull(PV), V, PV);
+StaticVarSet("PV", PV);
+
+}
+_SECTION_END();
+
+_SECTION_BEGIN("Normalized Volume");
+if (Nz(VarGet("runonce_NormalizedVolume")) == 0) {
+VarSet("runonce_NormalizedVolume",1);
+
+period = Param("Average Volume Period", 50, 5, 200, 1);
+nVolume = FA_Normalized(PV, period);
+nVolume = IIf(IsNull(nVolume), 75, nVolume);
+
+Plot( nVolume, _DEFAULT_NAME(), IIf( nVolume >= 150, ParamColor("High Volume", colorGreen ), IIf(nVolume <= 75 , ParamColor("Low Volume", colorRed ),ParamColor("Normal Volume", colorYellow )) ), styleHistogram | styleThick, maskHistogram );
+}
+_SECTION_END();

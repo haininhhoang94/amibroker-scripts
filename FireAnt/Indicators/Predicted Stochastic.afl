@@ -1,0 +1,34 @@
+/*
+Plots a predicted stochastic indicator based on the predicted price change. The predicted price change is entered via the parameters
+*/
+PC = StaticVarGet("PC");
+PC = IIf(IsNull(PC), C, PC);
+PH = StaticVarGet("PH");
+PH = IIf(IsNull(PH), H, PH);
+PL = StaticVarGet("PL");
+PL = IIf(IsNull(PL), L, PL);
+
+periods = Param( "Period", 14, 1, 50, 1 );
+Ksmooth = Param( "%K Avg", 3, 1, 20, 1 );
+Dsmooth = Param( "%D Avg", 3, 1, 20, 1 );
+chg = Param("Future Change %", 5, -15, 15, 0.1 );
+
+FutureC = LastValue( PC ) * ( 1 + 0.01 * chg );
+FutureH = LastValue( PH ) * ( 1 + 0.01 * chg );
+FutureL = LastValue( PL ) * ( 1 + 0.01 * chg );
+
+inputC = Ref( PC, 1 );
+inputH = Ref( PH, 1 );
+inputL = Ref( PL, 1 );
+
+inputC[ BarCount - 1 ] = FutureC;
+inputH[ BarCount - 1 ] = FutureH;
+inputL[ BarCount - 1 ] = FutureL;
+
+StockKK = MA((inputC-LLV(inputL,periods))/(HHV(inputH,periods)-(LLV(inputL+.00001,periods))),Ksmooth)*100;
+StocDDD = MA(StockKK,Dsmooth);
+
+Plot( StockKK, "%K", colorBlue, styleLine );
+Plot( StocDDD, "%D", colorOrange, styleLine );
+
+Title = "Future price Change: " + chg + "%" + ", Future price: " + FutureC + ", Future %K: " + NumToStr(StockKK, 1.2) + ", Future %D: " + NumToStr(StocDDD, 1.2);

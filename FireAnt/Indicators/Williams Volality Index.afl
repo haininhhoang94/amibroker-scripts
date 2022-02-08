@@ -1,0 +1,28 @@
+_N(Title = StrFormat(FullName() + "  {{INTERVAL}} {{DATE}} Open %g, High %g, Low %g, Close %g (%.1f%%) Volume " +WriteVal( V, 1.0 ) +"\n{{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 )) ));
+
+Periods = Param ("Period", 20, 5, 200, 1, 0);
+Width = Param("Width", 2, 1, 5, 1, 0);
+
+WVF = (HHV (Close,22) - Low)/(HHV(Close,22))*100;
+
+sdev= Width*StDev(WVF,Periods);
+midline=MA(WVF,Periods);
+
+lowerBand = midline - sdev;
+upperBand = midline + sdev;
+
+Plot(upperBand,"",colorGrey40,4|styleDashed);
+Plot(lowerBand,"",colorGrey40,4|styleDashed);
+
+ph=0.85;
+pl=1.01;
+
+rangeHigh = (HHV(wvf, 50)) * ph;
+rangeLow = (LLV(wvf, 50)) * pl;
+
+//mid=1;
+
+Plot(midline,"",colorGrey40,4|styleDashed);
+col = IIf(wvf >= upperBand,ColorRGB(270,0,150),IIf(wvf<=lowerBand,colorBlue,colorlightgrey));
+
+Plot(WVF,"William VIX FIX", col,4|styleHistogram|styleOwnScale);

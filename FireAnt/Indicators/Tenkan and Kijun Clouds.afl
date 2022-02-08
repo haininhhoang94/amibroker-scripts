@@ -1,0 +1,62 @@
+_SECTION_BEGIN("Kijun Sen");
+
+TK3 = ( HHV( H, 3 ) + LLV( L, 3) )/2; 
+TK5 = ( HHV( H, 5 ) + LLV( L, 5) )/2; 
+TK8 = ( HHV( H, 8 ) + LLV( L, 8 ) )/2; 
+TK10 = ( HHV( H, 10 ) + LLV( L, 10 ) )/2; 
+TK12 = ( HHV( H, 12 ) + LLV( L, 12) )/2; 
+TK15 = ( HHV( H, 15 ) + LLV( L, 15) )/2; 
+
+
+KJ30 = ( HHV( H, 30 ) + LLV( L, 30) )/2; 
+KJ35 = ( HHV( H, 35 ) + LLV( L, 35) )/2; 
+KJ40 = ( HHV( H, 40 ) + LLV( L, 40) )/2; 
+KJ45 = ( HHV( H, 45 ) + LLV( L, 45) )/2; 
+KJ50 = ( HHV( H, 50 ) + LLV( L, 50) )/2; 
+KJ60 = ( HHV( H, 60 ) + LLV( L, 60) )/2; 
+
+ShowTk = ParamList( "Show All Tenkans", "Enable|Disable", 1 );
+if( ShowTk == "Enable" )
+{
+	Plot(TK3,"TK3",colorBlue,styleThick, Null, Null, 0, -1);
+	Plot(TK5,"TK5",colorBlue,styleLine, Null, Null, 0, -1); 
+	Plot(TK8,"TK8",colorBlue,styleLine, Null, Null, 0, -1); 
+	Plot(TK10,"TK10",colorBlue,styleLine, Null, Null, 0, -1); 
+	Plot(TK12,"TK12",colorBlue,styleLine, Null, Null, 0, -1); 
+	Plot(TK15,"TK15",colorBlue,styleThick, Null, Null, 0, -1); 
+}
+PlotOHLC(TK3,TK3, TK15, TK15, "Tenkan Cloud",iif(TK3>TK15, colorBrightGreen,colorGreen),styleCloud, Null, Null, 0, 0 );
+
+ShowKJ = ParamList( "Show All Kijuns", "Enable|Disable", 1 );
+if( ShowKJ == "Enable" )
+{
+	Plot(KJ30,"KJ30",colorViolet,styleThick, Null, Null, 0, -1); 
+	Plot(KJ35,"KJ35",colorViolet,styleLine, Null, Null, 0, -1); 
+	Plot(KJ40,"KJ40",colorViolet,styleLine, Null, Null, 0, -1); 
+	Plot(KJ45,"KJ45",colorViolet,styleLine, Null, Null, 0, -1); 
+	Plot(KJ50,"KJ50",colorViolet,styleLine, Null, Null, 0, -1); 
+	Plot(KJ60,"KJ60",colorViolet,styleThick, Null, Null, 0, -1); 
+}
+PlotOHLC(KJ30,KJ30, KJ60, KJ60, "Kijun Cloud",iif(KJ30>KJ60, colorRose, colorRed),styleCloud, Null, Null, 0, 0 );
+
+ShowPrice = ParamList( "Show Price Chart", "Enable|Disable", 0 );
+if( ShowPrice == "Enable" )
+{
+	Plot(C, "", colorBlue, styleCandle, Null, Null, 0, 2 );
+}
+
+kijunHigh =  iif(KJ30>KJ60, KJ30, KJ60); 
+kijunLow =  iif(KJ30>KJ60, KJ60, KJ30); 
+tenkanHigh  = iif(TK3>TK15,TK3,TK15);
+tenkanLow  = iif(TK3>TK15,TK15,TK3);
+
+
+Buy = Cross(tenkanLow, kijunHigh);
+Sell = Cross(kijunLow, tenkanHigh);
+Buy=ExRem(Buy,Sell);
+Sell=ExRem(Sell,Buy);
+
+PlotShapes(IIf(Buy, shapeUpArrow, shapeNone),colorBlue, 0, L);
+PlotShapes(IIf(Sell, shapeDownArrow, shapeNone),colorOrange, 0, H);
+
+_SECTION_END();

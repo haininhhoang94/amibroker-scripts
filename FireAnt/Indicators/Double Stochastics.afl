@@ -1,0 +1,37 @@
+/*
+This is a favorite using an exponential moving average with a double stochastic derived from the work of Walter Bresssert. This oscillator filters erratic movements often seen with a stochastic.
+*/
+_SECTION_BEGIN("DoubleStochastic");
+
+RequestTimedRefresh( 1 );
+PC = StaticVarGet("PC");
+PC = IIf(IsNull(PC), C, PC);
+PH = StaticVarGet("PH");
+PH = IIf(IsNull(PH), H, PH);
+PL = StaticVarGet("PL");
+PL = IIf(IsNull(PL), L, PL);
+
+
+Periods = Param( "Double %K Period", 14, 3, 50, 1 );
+Smooth = Param( "Double %D Period", 7, 3, 20, 1);
+LevelHi = Param("Overbought", 80, 0, 100, 1);
+LevelLO = Param("Oversold", 20, 0, 100, 1);
+ap=IIf(HHV( PH, Periods) - LLV( PL, Periods)==0,.0001,HHV( PH, Periods) - LLV( PL, Periods));
+A = EMA(( PC-LLV( PL, Periods))/ap, Smooth)*100;
+B = IIf((HHV( A, periods) - LLV(A, periods))!=0,(HHV( A, periods) - LLV(A, periods)),.001);
+KStoc = (A-LLV( A, periods))*100/B;
+DStoc = EMA(KStoc, Smooth) ; 
+Plot(LevelHi, "OB", colorBlueGrey, styleLine);
+Plot(LevelLo, "OS", colorBlueGrey, styleLine);
+Plot( KStoc, "Double %K", ParamColor( "%K Color", colorRed ));
+Plot( DStoc, "Double %D", ParamColor( "%D Color", colorBlue ));
+
+Buy = Cross(KStoc, DStoc) AND Kstoc < LevelLo;
+Sell = Cross(DStoc, KStoc) AND Kstoc > LevelHi;
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+ 
+
+PlotShapes( IIF( buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, yposition = DStoc); 
+PlotShapes( IIF( sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, yposition = DStoc ); 
+_SECTION_END();

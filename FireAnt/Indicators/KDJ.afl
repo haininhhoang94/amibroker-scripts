@@ -1,0 +1,30 @@
+_SECTION_BEGIN( "Stoch KD Cloud" );
+
+_SECTION_BEGIN("Stochastic %K");
+Period = Param( "KDJ Period", 15, 1, 200, 1 );
+KSmooth = Param( "%K Smooth Period", 3, 1, 200, 1 );
+DSmooth = Param( "%D Smooth Period", 3, 1, 200, 1 );
+KColor = ParamColor("%K Color", colorGreen);
+DColor = ParamColor("%D Color", colorRed);
+JColor = ParamColor("%J Color", colorBlue);
+Overbought = Param("Over Bought", 100, 80, 120, 1); 
+Oversold = Param("Over Sold", 0, -20, 20, 1);
+
+PC = StaticVarGet("PC" );
+C = IIf(IsNull(PC), C, PC);
+FA_KDJ(Period,KSmooth,DSmooth,KColor, DColor, JColor);
+
+Plot(Overbought,"OB",colorRed);
+Plot(Oversold,"OS",colorGreen);
+
+pJ = FA_STOCHJ(Period, KSmooth, DSmooth);
+
+Buy = pJ > Ref(pJ, -1) AND Ref(pJ,-2) > Ref(pJ,-1) AND Ref(pJ, -1) < 0;
+Sell = pJ < Ref(pJ, -1) AND Ref(pJ,-2) < Ref(pJ,-1) AND Ref(pJ, -1) > 100;
+
+Buy = ExRemSpan(Buy, 5);
+Sell = ExRemSpan(Sell, 5);
+
+PlotShapes( shapeSmallUpTriangle * Buy + shapeSmallDownTriangle * Sell, IIf( Buy, colorGreen, colorRed ) );
+
+_SECTION_END();

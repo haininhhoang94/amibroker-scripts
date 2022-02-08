@@ -1,0 +1,18 @@
+function HPI( MultFactor)
+{
+	M = ( H + L ) /2;
+	My = Ref( M, -1 );
+
+	I = abs( OpenInt - Ref( OpenInt, -1 ) );
+	G = Max( OpenInt, Ref( OpenInt, -1 ) );
+
+	K =  Volume * ( M - My ) * ( 1  + sign( M - My ) * 2 * I / G );
+
+	//return AMA2( K, MultFactor / 100000, ( 1 - MultFactor ) / 100000 );
+	//return K;
+	return FA_AMA2( K, 1/MultFactor)/100000;  	
+}
+
+//OpenInt = C;
+
+Plot( HPI( 20 ), _DEFAULT_NAME(), ParamColor("Color", ColorCycle ) );

@@ -1,0 +1,73 @@
+_SECTION_BEGIN("3 Moving Average Exploration 7-25-99");
+
+Buy=0;
+Sell=0;
+Filter=0;
+
+MAShortPeriod = Param("Short MA", 5, 3, 20, 1, 0);
+MAMediumPeriod = Param("Medium MA", 20, 15, 50, 1, 0); 
+MALongPeriod = Param("Long MA", 100, 50, 200, 1, 0); 
+
+MAShort=MA(C, MAShortPeriod);
+MAMedium=MA(C, MAMediumPeriod);
+MALong=MA(C,MALongPeriod);
+
+Plot(MAShort, "Short MA", colorRed,styleDots); 
+Plot(MAMedium, "Medium MA", colorGrey40,styledots); 
+Plot(MALong, "Long MA", colorGreen,styledots); 
+
+Buy = Cross(MAShort, MAMedium) AND MAShort>Ref(MAShort,-1);
+Sell= Cross(MAMedium,MAShort) AND MAShort<Ref(MAShort,-1);
+
+Buy2 = Cross(MAShort, MALong) AND MAShort>Ref(MAShort,-1);
+Sell2= Cross(MALong, MAShort) AND MAShort<Ref(MAShort,-1);
+
+Buy3 = Cross(MAMedium, MALong) AND MAMedium>Ref(MAMedium,-1);
+Sell3= Cross(MALong, MAMedium) AND MAMedium<Ref(MAMedium,-1);
+
+condition = Buy OR Sell OR Buy2 OR Sell2 OR Buy3 OR Sell3;
+
+AddColumn(Close, "Close", 1.2);
+AddColumn(Volume, "Volume", 1.2);
+AddColumn(MAShort, "MAShort");
+AddColumn( condition, "Condition", 1.0);
+
+Filter = condition;
+
+Choice = ParamList("Method", "SHORTxMEDIUM|SHORTxLONG|MEDIUMxLONG", 0);
+
+if (Choice == "SHORTxMEDIUM") {
+	PlotShapes(IIf(Buy, shapeSquare, shapeNone),colorGreen, 0, L, Offset=-10);
+	PlotShapes(IIf(Buy, shapeSquare, shapeNone),colorLime, 0,L, Offset=-20);                      
+	PlotShapes(IIf(Buy, shapeUpArrow, shapeNone),colorWhite, 0,L, Offset=-15); 
+	PlotShapes(IIf(Sell, shapeSquare, shapeNone),colorRed, 0, H, Offset=10);
+	PlotShapes(IIf(Sell, shapeSquare, shapeNone),colorOrange, 0,H, Offset=20);                      
+	PlotShapes(IIf(Sell, shapeDownArrow, shapeNone),colorWhite, 0,H, Offset=-15);
+}
+else if (Choice == "SHORTxLONG") {
+	PlotShapes(IIf(Buy2, shapeSquare, shapeNone),colorGreen, 0, L, Offset=-10);
+	PlotShapes(IIf(Buy2, shapeSquare, shapeNone),colorLime, 0,L, Offset=-20);                      
+	PlotShapes(IIf(Buy2, shapeUpArrow, shapeNone),colorWhite, 0,L, Offset=-15); 
+	PlotShapes(IIf(Sell2, shapeSquare, shapeNone),colorRed, 0, H, Offset=10);
+	PlotShapes(IIf(Sell2, shapeSquare, shapeNone),colorOrange, 0,H, Offset=20);                      
+	PlotShapes(IIf(Sell2, shapeDownArrow, shapeNone),colorWhite, 0,H, Offset=-15);
+}
+else {
+	PlotShapes(IIf(Buy3, shapeSquare, shapeNone),colorGreen, 0, L, Offset=-10);
+	PlotShapes(IIf(Buy3, shapeSquare, shapeNone),colorLime, 0,L, Offset=-20);                      
+	PlotShapes(IIf(Buy3, shapeUpArrow, shapeNone),colorWhite, 0,L, Offset=-15); 
+	PlotShapes(IIf(Sell3, shapeSquare, shapeNone),colorRed, 0, H, Offset=10);
+	PlotShapes(IIf(Sell3, shapeSquare, shapeNone),colorOrange, 0,H, Offset=20);                      
+	PlotShapes(IIf(Sell3, shapeDownArrow, shapeNone),colorWhite, 0,H, Offset=-15);
+}
+
+AlertIF( Buy, "", "Buy 1D: Short MA cross Medium MA; at : "  + C + " " + Now(2), 0 );
+AlertIF( Sell, "", "Sell 1D: Medium MA cross Short MA; at : "  + C + " " + Now(2), 0 );
+
+AlertIF( Buy2, "", "Buy 1D: Short MA cross Long MA; at : "  + C + " " + Now(2), 0 );
+AlertIF( Sell2, "", "Sell 1D: Long MA cross Short MA; at : "  + C + " " + Now(2), 0 );
+
+AlertIF( Buy3, "", "Buy 1D: Medium MA cross Long MA; at : "  + C + " " + Now(2), 0 );
+AlertIF( Sell3, "", "Sell 1D: Long MA cross Medium MA; at : "  + C + " " + Now(2), 0 ); 
+
+_SECTION_END();

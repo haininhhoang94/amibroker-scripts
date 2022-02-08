@@ -1,0 +1,50 @@
+_SECTION_BEGIN("Boring Based Candle Detection");
+
+rallyCandle = O<C;
+rallyCandle1 = Ref(O,-1) < Ref(C,-1);
+rallyCandle2 = Ref(O,-2) < Ref(C,-2);
+rallyCandle3 = Ref(O,-1) < Ref(C,-1);
+rallyCandle4 = Ref(O,-1) < Ref(C,-1);
+rallyCandle5 = Ref(O,-1) < Ref(C,-1);
+declineCandle = O > C;
+declineCandle1 = Ref(O,-1) > Ref(C,-1);
+declineCandle2 = Ref(O,-2) > Ref(C,-2);
+declineCandle3 = Ref(O,-3) > Ref(C,-3);
+declineCandle4 = Ref(O,-4) > Ref(C,-4);
+declineCandle5 = Ref(O,-5) > Ref(C,-5);
+baseCandle = abs(Open-Close)/(0.000001+abs(High-Close)) < 0.5;
+baseCandle1 = abs(Ref(O,-1) - Ref(C,-1))/(0.000001+abs(ref(H,-1)-Ref(C,-1))) < 0.5;
+baseCandle2 = abs(Ref(O,-2) - Ref(C,-2))/(0.000001+abs(ref(H,-2)-Ref(C,-2))) < 0.5;
+baseCandle3 = abs(Ref(O,-3) - Ref(C,-3))/(0.000001+abs(ref(H,-3)-Ref(C,-3))) < 0.5;
+baseCandle4 = abs(Ref(O,-4) - Ref(C,-4))/(0.000001+abs(ref(H,-4)-Ref(C,-4))) < 0.5;
+baseCandle5 = abs(Ref(O,-1) - Ref(C,-5))/(0.000001+abs(ref(H,-5)-Ref(C,-5))) < 0.5;
+
+BarColor = IIf( baseCandle, colorBlue, IIf(rallyCandle, colorGreen, colorRed));
+
+Buy = rallyCandle AND baseCandle1 AND rallyCandle2 AND rallyCandle3 AND baseCandle4 AND rallyCandle5;
+Sell = declineCandle AND baseCandle1 AND declineCandle2 AND declineCandle3 AND baseCandle4 AND declineCandle5;
+
+Choice = ParamList("Method", "Standard|Extend", 0);
+
+if (Choice == "Standard") {
+	Buy = rallyCandle AND baseCandle1 AND rallyCandle2;
+	Sell = declineCandle AND baseCandle1 AND declineCandle2;
+}
+else {
+	Buy = rallyCandle AND baseCandle1 AND rallyCandle2 AND rallyCandle3 AND baseCandle4 AND rallyCandle5;
+	Sell = declineCandle AND baseCandle1 AND declineCandle2 AND declineCandle3 AND baseCandle4 AND declineCandle5; 
+}
+
+	
+
+Buy = ExRemSpan(Buy, 5);
+Sell = ExRemSpan(Sell, 5);
+PlotShapes( IIF( Buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, L); 
+PlotShapes( IIF( Sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, H); 
+
+
+Plot( Close, "Price", BarColor, styleCandle );
+
+_SECTION_END();
+
+

@@ -1,0 +1,43 @@
+_SECTION_BEGIN("RSI Channel");
+H=L=C=RSI(14); 
+Plot( Close, "Close", colorWhite, styleThick ); 
+
+Sens=Param("ZigZag Period",35,0.5,100,0.5); 
+ 
+BarPK=BarsSince(Zig(C,Sens)==Peak(C,Sens)); 
+BarTGH= BarsSince(Zig(C,Sens)==Trough(C,Sens)); 
+Turnpoint=Min(BarPK,BarTGH); 
+x = Cum(1); 
+lastx = ValueWhen(Turnpoint==0,( x )); 
+Daysback = ValueWhen(Turnpoint==0,(Max(PeakBars(C,Sens,1),TroughBars(C,Sens,1))))+1; 
+ 
+aa =ValueWhen(Turnpoint==0,LinRegIntercept( Close, Daysback) ); 
+bb =ValueWhen(Turnpoint==0,LinRegSlope( Close, Daysback)); 
+y = Aa + bb * ( x - (Lastx - DaysBack+1) ); 
+ 
+e= ValueWhen(Turnpoint==0,StdErr(C,Daysback)); 
+eU= y + 2*e; 
+eL= y - 2*e; 
+ 
+
+Buy = Cross(C,eU);
+Sell = Cross(eL,C);
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+
+PlotShapes(shapeUpArrow*Buy,colorGreen,0, eU); 
+PlotShapes(shapeDownArrow*Sell,colorRed,0,eL); 
+
+Plot( eU, "eU", colorred, styleDots ); 
+Plot( eL, "eL", colorblue, styleDots ); 
+
+_SECTION_BEGIN("Filter");
+AddColumn(V,"Volume",1.0);
+BuyChannel = Cross(C,eU);
+SellChannel = Cross(eL,C);
+AddColumn(BuyChannel,"Buy Signal",True, colorcustom2,colorcustom8);
+AddColumn(SellChannel,"Sell Signal",True, colorcustom2,colorCustom5);
+Filter = BuyChannel OR SellChannel;
+_SECTION_END();
+
+_SECTION_END();

@@ -1,0 +1,21 @@
+/*
+Average True Range (ATR) is a very useful measure of volatility, but it is not directly comparable across securities and over time.
+Normalized ATR can solve this issue or make it into PositionScore.
+*/
+PC = StaticVarGet("PC" );
+PC = IIf(IsNull(PC), C, PC);
+
+ATRPeriod = Param("ATR Period", 20, 5, 200, 1);
+PeriodAtr = FA_ATR( ATRPeriod );
+NormalizedAtr = ( PeriodAtr / PC ) * 100;
+
+Plot(NormalizedAtr, "Normalized ATR",colorGreen, styleLine);
+
+Filter = 1;
+
+AddColumn( O, "O", 1.2 );
+AddColumn( H, "H", 1.2 );
+AddColumn( L, "L", 1.2 );
+AddColumn( C, "C", 1.2 );
+
+AddColumn( NormalizedAtr, "Normalized ATR", 1.2 );

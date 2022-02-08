@@ -1,0 +1,66 @@
+_SECTION_BEGIN("Total OI");
+
+//Symbol1OI_Vege=Foreign(Name(),"I"); 
+V1 = Ref(V,-1);
+C1 = Ref(C,-1);
+oi1 = OI;
+oi2 = Ref(OI,-1);
+vol_up = V>V1;
+price_up = C>C1;
+oi_up = oi1 >  oi2;
+vol_dn = V<V1;
+price_dn = C<C1;
+oi_dn = oi1 <  oi2;
+ROChag = ROC(oi1,1);
+long_buildup = price_up AND vol_up AND oi_up;
+short_buildup = price_dn AND vol_up AND oi_up;
+long_unwinding = price_up AND vol_dn AND oi_dn;
+short_covering = price_dn AND vol_dn AND oi_dn;
+trendSTATUS =
+WriteIf(long_buildup,"long_buildup",
+WriteIf(short_buildup,"short_buildup",
+WriteIf(long_unwinding,"long_unwinding",
+WriteIf(short_covering,"short_covering"," "))));
+trendCOLOR = IIf(long_buildup, colorGreen,IIf(short_buildup, colorRed,IIf(long_unwinding, colorOrange,IIf(short_covering, colorBlue, colorWhite))));
+//Plot(Symbol1OI_Vege ," Current OI",trendCOLOR ,styleHistogram);
+
+Title = Name() + " - " + Date() + ", " 
+	+" Open=" 	+WriteVal(O,1.0)+ ", "
+	+" High=" +WriteVal(H,1.0)+  ", "
+	+" Low=" +WriteVal(L,1.0)+ ", "
+	+" Close=" +WriteVal(C,1.0) +", "
+	+" OI=" +WriteVal(oi1,1.0)+", " +" OI% Chg=" +WriteVal(ROChag,1.0);
+
+Long = price_up AND oi_up;
+Short = price_dn AND oi_up ;
+
+Long = ExRem(Long, Short);
+Short = ExRem(Short, Long);
+ 
+
+ChartType = ParamList("Chart Type", "Price Chart|Indicator"); 
+
+if (ChartType == "Price Chart")  // Price Chart
+{
+	PlotShapes( IIF( Long, shapeUpArrow, shapeNone ), colorGreen , layer = 0, L); 
+	PlotShapes( IIF( Short, shapeDownArrow, shapeNone ), colorRed , layer = 0, H); 
+}
+
+
+if (ChartType == "Indicator")  // 
+{
+	Plot(oi1 ,"OI",trendCOLOR ,styleHistogram);
+}
+
+
+Filter = Long OR Short;
+
+AddColumn(C,"Close",1.2);
+AddTextColumn(trendSTATUS,"OI Status",1, colorBlack, trendCOLOR,width=110);
+AddColumn(C,"Close",1,IIf(C>Ref(C,-1),colorGreen,colorRed));
+AddColumn(ROC(C,1),"% Price change",1.2);
+AddColumn(oi1,"open interest",1,IIf(oi_up,colorGreen,colorRed));
+AddColumn(ROChag,"% OI change",1.2);
+SetSortColumns( -7,-8);
+
+_SECTION_END();

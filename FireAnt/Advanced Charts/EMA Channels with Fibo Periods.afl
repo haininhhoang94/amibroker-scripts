@@ -1,0 +1,108 @@
+#include_once <FireAnt.h>
+
+_SECTION_BEGIN("Price");
+if (Nz(VarGet("runonce_Basic")) == 0) {
+VarSet("runonce_Basic",1);
+CellHeight = Param("Cell Height",20,5,200,1); 
+CellWidth = Param("Cell Width",120,5,200,1); 
+PanelYoffset = Param("Cell Row Offset (px)",15,0,Status("pxheight"),1); 
+PanelXoffset = Param("Cell Column Offset (px)",10,0,Status("pxwidth"),1); 
+FontRatio = Param("Font: CellHeight ratio",2,1,20,0.1);
+Triger =1;
+
+
+Column_Begin( "1");
+Triger = TriggerCell( "TEST MODUS OFF", "TEST MODUS ON", colorRed, colorBrightGreen, colorBlack);
+Column_End( );
+
+TestModus = Nz(StaticVarGet("TestModus"), OFF);
+
+TP = LastValue(C);
+PV = StaticVarGet("PV");
+PV = IIf(IsNull(PV), V, PV);
+
+if (Triger == 0) 
+{
+	if ( GetCursorMouseButtons() & 9 ) 
+	{ 
+		TP = Nz(GetCursorYPosition(),Nz(StaticVarGet("TestPrice"),LastValue(C)));
+
+		StaticVarSet("TestPrice", TP);
+	}
+	else { 
+		TP = Nz(StaticVarGet("TestPrice"),LastValue(C));
+	}
+}
+else
+	TP = LastValue(C); 
+
+if (TestModus==OFF) {
+	TP = LastValue(C);
+	PC = C;
+	PH = H;
+	PL = L;
+	PTypical = Avg;
+}
+else {
+	PC = FA_Price(3);
+	PH = FA_Price(1);
+	PL = FA_Price(2);
+	PTypical = FA_Price(5);
+}
+
+StaticVarSet("TP", TP );
+StaticVarSet("PC", PC );
+StaticVarSet("PL", PL );
+StaticVarSet("PH", PH );
+StaticVarSet("PTypical", PTypical);
+
+SetChartOptions(0,chartShowArrows|chartShowDates);
+
+
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) Vol " +WriteVal( PV, 1.0 ) +" {{VALUES}}", O, PH, PL, PC, SelectedValue( ROC( PC, 1 )) ));
+
+PriceStyle = GetPriceStyle();
+
+if (PriceStyle==styleCandle)
+	Plot( PC, "Close", colorDefault , PriceStyle ); 
+else
+	Plot( PC, "Close", IIf( PC >= Ref(PC, -1), colorGreen, colorRed ), PriceStyle);
+
+}
+
+_SECTION_END();
+_SECTION_BEGIN("EMA Channel With Fibo Periods");
+takeProfit  = Param( "Take Profit At (%)", 20, 1, 200, 1 );
+HoldPeriod = Param( "Hold Period", 20, 1, 200, 1 );
+WaitPeriod = Param( "Wait Period", 20, 1, 200, 1 );
+Decline = Param( "Decline (%) Before Buying", 10, 1, 200, 1 );
+
+EMA13 = EMA(PC,13);
+EMA21 = EMA(PC,21);
+EMA34 = EMA(PC,34);
+EMA55 = EMA(PC,55);
+top = EMA13 > EMA21 AND EMA21 > EMA34 AND EMA34 > EMA55;
+bottom = EMA13 < EMA21 AND EMA21 < EMA34 AND EMA34 < EMA55;
+
+Plot( EMA13, "EMA 13" ,ParamColor( "EMA 13", colorYellow ));
+Plot( EMA21, "EMA 21" ,ParamColor( "EMA 21", colorLime )); 
+Plot( EMA34, "EMA 34" ,ParamColor( "EMA 34", colorBlue )); 
+Plot( EMA55, "EMA 55" ,ParamColor( "EMA 55", colorRed ));
+
+vegasTunnelShort = EMA(PC,144);
+vegasTunnelLong = EMA(PC,169);
+
+Buy = PC < vegasTunnelShort AND PC < vegasTunnelLong AND bottom AND Cross(PC, EMA13) AND 1 - PC/Ref(PC, -WaitPeriod) > Decline/100.0;
+Sell = PC > vegasTunnelShort AND PC > vegasTunnelLong AND top AND PC/Ref(PC, -HoldPeriod) - 1> takeProfit/100.0;
+Buy = ExRemSpan(Buy, 5);
+Sell = ExRemSpan(Sell, 5);
+ 
+PlotShapes( IIF( Buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, PL); 
+PlotShapes( IIF( Sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, PH); 
+
+_SECTION_END();
+
+_SECTION_BEGIN("Vegas Tunnel");
+Plot( vegasTunnelShort, "Vegas Tunnel Short Period" ,ParamColor( "Vegas Tunnel Short Color", colorOrange ) , styleThick);
+Plot( vegasTunnelLong, "Vegas Tunnel Long Period", ParamColor( "Vegas Tunnel Long Color", colorTurquoise ), styleThick);
+_SECTION_END();

@@ -1,0 +1,92 @@
+/*
+Explore to select stocks that get Bullish Reversal Signals. Bullish Reversal is based on CandleStick which is basically looking
+reversal up after the previous decline. Or in other words, Buy On Weekness or Buy On Dip These signals are sorted by RSI from low to high.
+As is known, the lower the RSI the price reduction is in, and vice versa.
+There are 2 parameters / variables that we can set:
+1. Max RSI: Maximum RSI allowed, the default value is 35 (for filter bullish reversal)
+2. Min RSI: Minimum RSI allowed, the default value is 65 (for filter bearish reversal)
+2. Min Value: Average value of 20 days in Billion Vietnam dong, the default value is 5 bil VND
+This is to filter out enough liquid stocks
+*/
+
+C1 = Ref(C,-1);
+C2 = Ref(C,-2);
+A1 = Ref(Avg,-1);
+A2 = Ref(Avg,-2);
+A3 = Ref(Avg,-3);
+A4 = Ref(Avg,-4);
+A5 = Ref(Avg,-5);
+O1 = Ref(O,-1);
+O2 = Ref(O,-2);
+
+Condition1 = ((A1 < A2) AND (A2 < A3) AND (A1 < A4)); //AND (A3 < A4) ) ;//OR ( A1 < A3);
+Condition2 = (C1 <= O1) AND (C2 <= O2);
+ConditionDown = Condition1 AND Condition2;
+Condition3 = (A1 > A2) AND (A2 > A3) AND (A1 > A4) ;
+Condition4 = (C1 >= O1) AND (C2 >= O2);
+ConditionUp = Condition3 AND Condition4;
+
+BelowMA20 = C < MA(C,20);
+AboveMA20  = C > MA(C,20);
+
+//HammerBlack 
+BodyBlack = O - C;
+TailBlack = C - L;
+HammerBlack = (O==H) AND (C < O) AND (TailBlack >= 2*BodyBlack);
+
+//HammerWhite 
+BodyWhite = C - O;
+TailWhite = O - L;
+HammerWhite = (C==H) AND (C > O) AND (TailWhite >= 2*BodyWhite);
+
+Hammer = HammerWhite OR HammerBlack;// Candlestick Bullish or Bearish Reversal
+Doji = O == C;
+IsBodyWhite = C > O ;//AND (TailBlack < BodyBlack) ;
+IsBodyBlack = C < O ;//AND (TailWhite < BodyWhite);
+
+BullishReversal = Doji OR IsBodyWhite OR Hammer;
+BearishReversal = Doji OR IsBodyBlack OR Hammer;
+
+BullishR = ConditionDown AND BullishReversal ;
+BearishR = ConditionUp  AND BearishReversal ;
+
+// Liquidity
+AvgPrice=(O+H+L+C)/4;
+DV=AvgPrice*V;
+DVBil = DV / 1000000;
+
+MADV20 = MA( DV, 20 );
+MADV20Bil = MADV20 / 1000000;
+
+//FV = DVBil / Ref(MADV20Bil,-1) ;
+
+// Tick and Purchase Price
+/*
+Tick =  IIf (C<10,1,
+		IIf (C>=10 AND C<20,2,
+		IIf (C>=20 AND C<30,3,
+		IIf (C>=30 AND C<50,5,10))))
+		
+Tick =  IIf (C<=10,1,
+		IIf (C>10 AND C<=50,5,10)); */
+S = C*0.95;
+B = C*1.05;
+
+// Parameter - Variable
+
+RSIMax = Param ("Maximal RSI", 35, 0, 45, 1);
+RSIMin = Param ("Minimal RSI", 65, 55, 100, 1);
+ValueMin = Param ("Minimal Value (VND. bil.)", 5, 2, 10000, 1);
+
+Buy = (BullishR AND MADV20Bil > ValueMin AND RSI() < RSIMax);
+Sell = (BearishR AND MADV20Bil > ValueMin AND RSI() > RSIMin);
+Filter = Buy OR Sell;
+
+AddColumn (RSI(),"RSI",1.2, colorBlack);
+AddColumn (DVBil,"Value (Bil)",1.2,IIf(DVBil > 50, colorViolet,IIf (DVBil >20, colorGreen,colorBlack)));
+AddColumn (C,"Close",1.0, colorBlack);
+AddColumn (IIf(Buy, B, S), "Trade Price" ,1.1, IIf(Buy, colorGreen, colorRed));
+//Difference = ((Ref(C,1) - C ) / C )*100;
+//AddColumn (Deviation,"% Today",1.2, colorBlack);
+AddColumn (Ref(ROC(C,1),1),"% Today",1.2, IIf(Ref(ROC(C,1),1)>=0 ,colorBlack, colorRed));
+SetSortColumns(3);

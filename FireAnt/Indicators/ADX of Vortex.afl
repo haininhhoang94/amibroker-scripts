@@ -1,0 +1,56 @@
+_SECTION_BEGIN("ADX of Vortex");
+if (Nz(VarGet("runonce_ADXVortex")) == 0) {
+	VarSet("runonce_ADXVortex",1);
+	Period = Param("Period" , 14, 2, 100, 1, 0 ); 
+	VortexBottom = Param("Low Vortex", 10, 5, 15, 1, 0);
+	VortexTop = Param("High Vortex", 15, 10, 25, 1, 0);
+	
+	PC = StaticVarGet("PC");
+	PH = StaticVarGet("PH");
+	PL = StaticVarGet("PL");
+	 
+	VMP = 10*Sum( abs( H - Ref( L, -1 ) ), Period ); 
+	VMM = 10*Sum( abs( L - Ref( H, -1 ) ), Period ); 
+	STR = Sum( FA_ATR( 1 ), Period ); 
+	VIP = VMP / STR; 
+	VIM = VMM / STR; 
+
+	DIDif=abs(VIP-VIM);
+	DISum=(VIP+VIM);
+	ADXofVortex=100*Wilders(DIDif/DISum,Period);  
+
+	Plot( VIP, "VI-Plus"+Period, colorBlue | styleThick ); 
+	Plot( VIM, "VI-Minus"+Period, colorRed  );
+	Plot( VIM, "", colorOrange , styleClipMinMax |  styleNoLabel | styleHistogram  );
+	Plot(ADXofVortex,"ADX of Vortex", IIf(ADXofVortex>Ref(ADXofVortex,-1), colorWhite, colorYellow), styleThick | styleLine);
+	Plot(VortexTop,"",colorWhite ,styleDashed   );
+	Plot(VortexBottom,"",colorWhite,styleDashed   );
+	
+	Choice = ParamList("Method", "Vortex_VI|Vortex_TOP", 0);
+
+	if (Choice == "Vortex_VI") {
+		Buy = Ref(ADXofVortex, -1) == HHV(ADXofVortex, Period) AND  VIM> VIP AND Ref(ADXofVortex, -1) > VortexTop AND VIP > Ref(VIP, -1) AND Ref(ADXofVortex, -1) > ADXofVortex;
+		Sell = Ref(ADXofVortex, -1) == HHV(ADXofVortex, Period) AND VIM < VIP AND Ref(ADXofVortex, -1) > VortexTop AND VIM > Ref(VIM, -1) AND Ref(ADXofVortex, -1) > ADXofVortex;
+	}
+	else {
+		Buy = Cross(VortexTop,ADXofVortex);
+		Sell = Cross(ADXofVortex, VortexTop); 
+	}
+	
+	
+	//Buy = Ref(ADXofVortex, -1) == HHV(ADXofVortex, Period) AND  VIM> VIP AND Ref(ADXofVortex, -1) > VortexTop AND VIP > Ref(VIP, -1) AND Ref(ADXofVortex, -1) > ADXofVortex;
+	//Sell = Ref(ADXofVortex, -1) == HHV(ADXofVortex, Period) AND VIM < VIP AND Ref(ADXofVortex, -1) > VortexTop AND VIM > Ref(VIM, -1) AND Ref(ADXofVortex, -1) > ADXofVortex;
+	//Buy = Cross(VortexTop,ADXofVortex);
+	//Sell = Cross(ADXofVortex, VortexTop); 
+	
+	Buy = ExRemSpan(Buy, 5);
+	Sell = ExRemSpan(Sell, 5);
+	//Buy = ExRem(Buy, Sell);
+	//Sell = ExRem(Sell, Buy);
+	 
+
+	PlotShapes( IIF( buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, yposition = ADXofVortex); 
+	PlotShapes( IIF( sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, yposition = ADXofVortex); 
+}
+
+_SECTION_END();

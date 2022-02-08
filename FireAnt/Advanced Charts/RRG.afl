@@ -1,0 +1,183 @@
+_SECTION_BEGIN( "XY-Rotation Chart" );
+
+_N( base = ParamStr( "Base", "VNINDEX" ) );
+_N( list = ParamStr( "Symbols", "0001,1000,2000,3000,4000,5000,6000,7000,8000,9000" ) );
+tbar = Param( "Trailing Bar", 12, 1, 100, 1 );
+
+color1 = ParamColor("Màu 1:", colorRed);
+color2 = ParamColor("Màu 2:", colorOrange);
+color3 = ParamColor("Màu 3:", colorYellow);
+color4 = ParamColor("Màu 4:", colorDarkGreen);
+color5 = ParamColor("Màu 5:", colorBlue);
+color6 = ParamColor("Màu 6:", colorCustom10);
+color7 = ParamColor("Màu 7:", colorPlum);
+color8 = ParamColor("Màu 8:", colorBrown);
+color9 = ParamColor("Màu 9:", colorViolet);
+color10 = ParamColor("Màu 10:", colorCustom12);
+color11P = ParamColor("Màu 11+:", colorBlack);
+
+list = Name()+","+list;
+
+EnableTextOutput( False );
+GfxSetOverlayMode( 2 );
+
+pxl = Status( "pxchartleft" );
+pxr = Status( "pxchartright" );
+pxt = Status( "pxcharttop" );
+pxb = Status( "pxchartbottom" );
+pxw = ( pxr - pxl ) / 2;
+pxh = ( pxb - pxt ) / 2;
+xm = pxl + pxw;
+ym = pxt + pxh;
+
+GfxSelectSolidBrush( colorPaleGreen ); 
+GfxRectangle( xm, ym, pxr, pxt );
+GfxSelectSolidBrush( colorPink ); 
+GfxRectangle( xm, ym, pxl, pxb );
+GfxSelectSolidBrush( colorLightYellow ); 
+GfxRectangle( xm, ym, pxr, pxb );
+GfxSelectSolidBrush( colorLightBlue ); 
+GfxRectangle( xm, ym, pxl, pxt );
+
+GfxSetBkColor(colorPaleGreen);
+GfxTextOut( "DAN DAT", pxr-70 , pxt +5 );
+GfxSetBkColor(colorPink);
+GfxTextOut( "TUT HAU", pxl+5, pxb-20 );
+GfxSetBkColor(colorLightYellow);
+GfxTextOut( "SUY YEU", pxr-70, pxb-20);
+GfxSetBkColor(colorLightBlue);
+GfxTextOut( "CAI THIEN", pxl+5, pxt+5 );
+
+GfxTextOut( "FireAnt Media", xm - 100 , pxt + 5 );  
+
+GfxMoveTo( pxl, ym ); 
+GfxLineTo( pxr, ym );
+GfxMoveTo( xm, pxt );
+GfxLineTo( xm, pxb );
+
+bc = Foreign( base, "C" );
+
+
+function drawpos ( x, y, color, sym, op )
+{ 
+    xx = FA_RRG_Pos(x, y, pxl, pxr, pxt, pxb, 0);
+    yy = FA_RRG_Pos(x, y, pxl, pxr, pxt, pxb, 1);
+    
+    xp = Nz( VarGet( "xp" + sym ), xx );
+    yp = Nz( VarGet( "yp" + sym ), yy );
+
+    VarSet( "xp" + sym, xx );
+    VarSet( "yp" + sym, yy );
+
+    GfxMoveTo( xp, yp );
+    GfxSelectPen( color); 
+    GfxLineTo( xx, yy );
+
+    GfxSelectSolidBrush(color);  
+    
+    GfxCircle( xx, yy, IIf( op == 1, 2, 4 ) );
+    
+	GfxSetBkMode ( 1 ); 
+	
+	check = StrMid( sym, 0, 1);
+		if (check == "0" OR check == "1" OR check == "2" OR check == "3" OR check == "4" OR check == "5" OR check == "6" OR check == "7" OR check == "8" OR check == "9")
+			sym = FullName();
+		else
+			sym = Name();
+			
+	GfxSetTextColor( color); 
+    
+    //if ( text != "" ) GfxTextOut( sym, xx + 6 , yy - 3 );   
+    if ( op != 1 ) GfxTextOut( sym, xx + 6 , yy - 3 );   
+}
+
+
+for ( i = 0; ( sym = StrExtract( list, i ) ) != ""; i++ )
+{
+    SetForeign( sym );
+
+    rs = FA_RRG( C, bc, 1);
+    rm = FA_RRG ( C, bc, 0);
+
+    for ( ii = BarCount - tbar; ii < BarCount; ii++ ) 
+    {
+        rs_ = rs[ ii ];
+        rm_ = rm[ ii ];        
+
+        rsh = Nz( VarGet( "rsh" ), rs_ );
+        if ( rs_ >= rsh )
+            VarSet( "rsh", rs_ );
+
+        rsl = Nz( VarGet( "rsl" ), rs_ );
+        if ( rs_ <= rsl )
+            VarSet( "rsl", rs_ );
+
+        rmh = Nz( VarGet( "rmh" ), rm_ );
+        if ( rm_ >= rmh )
+            VarSet( "rmh", rm_ );
+
+        rml = Nz( VarGet( "rml" ), rm_ );
+        if ( rm_ <= rml )
+            VarSet( "rml", rm_ );
+    }
+
+    RestorePriceArrays( True );
+}
+
+for ( i = 0; ( sym = StrExtract( list, i ) ) != ""; i++ ) 
+{
+    SetForeign( sym );
+
+    rs = FA_RRG( C, bc, 1);
+    rm = FA_RRG( C, bc, 0);
+    
+    switch (i) {
+		case 0:
+			color = color1;
+			break;
+		case 1:
+			color = color2;
+			break;
+		case 2:
+			color = color3;
+			break;
+		case 3:
+			color = color4;
+			break;
+		case 4:
+			color = color5;
+			break;
+		case 5:
+			color = color6;
+			break;
+		case 6:
+			color = color7;
+			break;
+		case 7:
+			color = color8;
+			break;
+		case 8:
+			color = color9;
+			break;
+		case 9:
+			color = color10;
+			break;
+		default:
+			color = color11P;
+			break;
+	}
+    
+    for ( ii = BarCount - tbar; ii < BarCount; ii++ )
+    {
+		if (ii == BarCount - 1)
+			op = 0;
+		else
+			op = 1;
+        drawpos( rs[ ii ], rm[ ii ], color, sym, op  );  
+    }
+    //WriteIf( ii == BarCount - 1, sym, "" )
+
+    RestorePriceArrays( True );
+}
+
+_SECTION_END();

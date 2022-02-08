@@ -1,0 +1,30 @@
+_SECTION_BEGIN( "Stoch KD Cloud" );
+
+periods = Param( "Periods", 14, 1, 200, 1 );
+Ksmooth = Param( "%K Avg", 3, 1, 20, 1 );
+Dsmooth = Param( "%D Avg", 3, 1, 20, 1 );
+Overbought = Param("Over Bought", 85, 65, 95, 1); 
+Oversold = Param("Over Sold", 15, 5, 35, 1);
+
+a = StochK( periods , Ksmooth);
+Plot( a, _DEFAULT_NAME(), colorBrightGreen );
+
+b = StochD( periods , Ksmooth, DSmooth );
+Plot( b, _DEFAULT_NAME(), colorRed );
+
+PlotOHLC( a,a,b,a,"", IIf(a>b, colorBrightGreen, colorRed), styleCloud);
+
+Plot(Overbought,"OB",colorRed);
+Plot(Oversold,"OS",colorGreen);
+
+Buy = Cross( a, b ) AND a < Oversold;
+Sell = Cross( b, a ) AND a > Overbought;
+
+Buy = ExRemSpan(Buy, 5);
+Sell = ExRemSpan(Sell, 5);
+
+PlotShapes( shapeSmallUpTriangle * Buy + shapeSmallDownTriangle * Sell, IIf( Buy, colorGreen, colorRed ) );
+
+_SECTION_END();
+
+

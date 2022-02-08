@@ -1,0 +1,111 @@
+_SECTION_BEGIN("Average price volatility");
+
+//52 Weeks High Low
+High52 = HHV(High,250);
+Low52 = LLV(Low,250);
+i=0;
+
+//Price Movement (Short, Medium & Long Term)
+MAShort = C>MA(C,5);
+IIf(MAShort,i+1,i);
+MAMedium = C>MA(C,20);
+IIf(MAMedium,i+1,i);
+MALong = C>MA(C,60);
+IIf(MALong,i+1,i);
+
+//Cable Ties
+TK1=C>BBandTop(C,20,2) AND Ref(C,-1)<Ref(BBandTop(C,20,2),-1);
+TK2=C<BBandBot(C,20,2) AND Ref(C,-1)>Ref(BBandBot(C,20,2),-1);
+TKStatus=WriteIf(TK1,"Peak",WriteIf(TK2,"Trough",WriteIf(IsNull(MA(C,20)),"N/A","Netral")));
+TKColor=IIf(TK1,colorRed,IIf(TK2,colorGreen,colorLightOrange));
+IIf(TK2,i+1,i);
+
+//To find out the current price conditions
+
+Short = WriteIf(MAShort,"Bullish",WriteIf(IsNull(MA(C,5)) ,"N/A","Bearish"));
+WarnaShort = IIf(MAShort,colorGreen,colorRed);
+Medium = WriteIf(MAMedium,"Bullish",WriteIf(IsNull(MA(C,20))," N/A","Bearish"));
+WarnaMedium = IIf(MAMedium,colorGreen,colorRed);
+Long = WriteIf(MALong,"Bullish",WriteIf(IsNull(MA(C,60)) ,"N/A","Bearish"));
+WarnaLong = IIf(MALong,colorGreen,colorRed);
+
+//MACD
+MACDBull=MACD(12,26)>Signal(12,26,9);
+IIf(MACDBull,i+1,i);
+MACDStatus=WriteIf(MACDBull,"Bullish",WriteIf(IsNull(MACD(12,26)),"N/A","Bearish"));
+MACDColor=IIf(MACDBull,colorGreen,colorRed);
+
+//Aroon
+Period=14;
+LLVBarsSince=LLVBars(L,Period)+1;
+HHVBarsSince=HHVBars(H,Period)+1;
+AroonDown=100*(Period-LLVBarsSince)/(Period-1);
+AroonUp=100*(Period-HHVBarsSince)/(Period-1);
+AroonOsc=AroonUp-AroonDown;
+Aroon=AroonOsc>0;
+IIf(Aroon,i+1,i);
+AroonStatus=WriteIf(Aroon,"Bullish",WriteIf(IsNull (RSI(14)),"N/A","Bearish"));
+AroonColor=IIf(Aroon,colorGreen,IIf(IsNull(RSI(14) ),colorLightGrey,colorRed));
+
+//Stochastic
+StochKBull=StochK(14,3)>StochD(14,3,3);
+IIf(StochKBull,i+1,i);
+StochKStatus=WriteIf(StochKBull,"Bullish",WriteIf( IsNull(StochK(14,3)),"N/A","Bearish"));
+StochKColor=IIf(StochKBull,colorGreen,colorRed);
+
+//RSI
+R1=RSI(14)>30 AND Ref(RSI(14),-1)<30 AND Ref(RSI(14),-2)<30;
+R2=RSI(14)<70 AND Ref(RSI(14),-1)>70 AND Ref(RSI(14),-2)>70;
+IIf(R1,i+1,i);
+RSIStatus=WriteIf(R1,"Increased",WriteIf(R2,"Decreased",WriteIf(IsNull(RSI(14)),"N/A","Neutral")));
+RSIColor=IIf(R1,colorGreen,IIf(R2,colorRed,colorLightGrey));
+
+//MFI
+M1=MFI(14)>80;
+M2=MFI(14)<20;
+IIf(M2,i+1,i);
+MFIStatus=WriteIf(M1,"Saturated buying",WriteIf(M2,"Saturated Selling",WriteIf(IsNull(MFI(14)),"N/A","Neutral")));
+MFIColor=IIf(M1,colorRed,IIf(M2,colorGreen,colorLightGrey));
+
+// Liquid (only screened liquid stocks)
+
+LiquidationValue = Param("Min Value:", 5000000000, 1000000000, 100000000000, 100000000, 0);
+VMA20 = MA(V,20) ;
+Liquid = VMA20 * MA(C,20) > LiquidationValue/1000;
+
+TrendScore =
+
+IIf(TK2,1,0)+
+IIf(MAShort,1,0)+
+IIf(MAMedium,1,0) +
+IIf(MALong,1,0)+
+IIf(MACDBull,1,0) +
+IIf(Aroon,1,0) +
+IIf(StochKBull,1,0)+
+IIf(R1,1,0) +
+IIf(M2,1,0) ;
+
+
+Filter = Liquid; 
+
+AddColumn(TrendScore,"Score");
+AddColumn(High52,"52 Week High");
+AddColumn(Low52,"52 Week Low");
+AddColumn(O,"Open",1.0); 
+AddColumn(H,"High",1.0); 
+AddColumn(L,"Low",1.0); 
+AddColumn(C,"Close",1.0); 
+AddColumn(V,"Volume",1.0,1.0);
+AddColumn(C,"Close",1,IIf(C>Ref(C,-1),colorGreen,colorRed));
+AddColumn(V,"Volume",1,IIf(V>Ref(V,-1),colorGreen,colorRed));
+AddTextColumn(TKStatus,"BBand",1,colorWhite,TKColor);
+AddTextColumn(Short,"Short MA(5)",1,colorWhite,WarnaShort);
+AddTextColumn(Medium,"Medium MA(20)",1,colorWhite,WarnaMedium);
+AddTextColumn(Long,"Long MA(60)",1,colorWhite,WarnaLong);
+AddTextColumn(MACDStatus,"MACD",1,colorWhite,MACDColor);
+AddTextColumn(AroonStatus,"Aroon",1,colorWhite,AroonColor);
+AddTextColumn(StochKStatus,"Stochastic",1,colorWhite,StochKColor);
+AddTextColumn(RSIStatus,"RSI(14)",1,colorWhite,RSIColor);
+AddTextColumn(MFIStatus,"MFI(14)",1,colorWhite,MFIColor);
+
+_SECTION_END();

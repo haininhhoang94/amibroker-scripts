@@ -1,0 +1,8 @@
+_SECTION_BEGIN("Volume");
+Plot( Volume, _DEFAULT_NAME(), IIf( C > O, ParamColor("Up Color", colorGreen ), ParamColor("Down Color", colorRed ) ), ParamStyle( "Style", styleHistogram | styleThick, maskHistogram  ) );
+_SECTION_END();
+
+_SECTION_BEGIN("General Information");
+printf(GetFnData("Symbol"));
+printf(GetFnData("FullName"));
+_SECTION_END();

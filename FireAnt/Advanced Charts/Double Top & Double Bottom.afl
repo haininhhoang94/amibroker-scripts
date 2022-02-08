@@ -1,0 +1,187 @@
+#include_once <FireAnt.h>
+
+_SECTION_BEGIN("Price");
+if (Nz(VarGet("runonce_Basic")) == 0) {
+VarSet("runonce_Basic",1);
+CellHeight = Param("Cell Height",20,5,200,1); 
+CellWidth = Param("Cell Width",120,5,200,1); 
+PanelYoffset = Param("Cell Row Offset (px)",15,0,Status("pxheight"),1); 
+PanelXoffset = Param("Cell Column Offset (px)",10,0,Status("pxwidth"),1); 
+FontRatio = Param("Font: CellHeight ratio",2,1,20,0.1);
+Triger =1;
+
+
+Column_Begin( "1");
+Triger = TriggerCell( "TEST MODUS OFF", "TEST MODUS ON", colorRed, colorBrightGreen, colorBlack);
+Column_End( );
+
+TestModus = Nz(StaticVarGet("TestModus"), OFF);
+
+TP = LastValue(C);
+PV = StaticVarGet("PV");
+PV = IIf(IsNull(PV), V, PV);
+
+if (Triger == 0) 
+{
+	if ( GetCursorMouseButtons() & 9 ) 
+	{ 
+		TP = Nz(GetCursorYPosition(),Nz(StaticVarGet("TestPrice"),LastValue(C)));
+
+		StaticVarSet("TestPrice", TP);
+	}
+	else { 
+		TP = Nz(StaticVarGet("TestPrice"),LastValue(C));
+	}
+}
+else
+	TP = LastValue(C); 
+
+if (TestModus==OFF) {
+	TP = LastValue(C);
+	PC = C;
+	PH = H;
+	PL = L;
+	PTypical = Avg;
+}
+else {
+	PC = FA_Price(3);
+	PH = FA_Price(1);
+	PL = FA_Price(2);
+	PTypical = FA_Price(5);
+}
+
+StaticVarSet("TP", TP );
+StaticVarSet("PC", PC );
+StaticVarSet("PL", PL );
+StaticVarSet("PH", PH );
+StaticVarSet("PTypical", PTypical);
+
+SetChartOptions(0,chartShowArrows|chartShowDates);
+
+
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) Vol " +WriteVal( PV, 1.0 ) +" {{VALUES}}", O, PH, PL, PC, SelectedValue( ROC( PC, 1 )) ));
+
+Plot( PC, "Close", colorDefault, styleCandle); 
+
+}
+
+_SECTION_END();
+
+_SECTION_BEGIN("Double Top, Double Bottom");
+GraphXSpace = 5;
+SetChartBkColor( colorBlack );
+SetChartOptions( 1, chartShowDates, chartGridMiddle, 0, 0, 0 );
+SetChartOptions(0,chartShowArrows|chartShowDates);
+SetBarFillColor( IIf( C > O, ColorRGB( 0, 75, 0 ), IIf( C <= O, ColorRGB( 75, 0, 0 ), colorLightGrey ) ) );
+
+// Fractal Pivots
+bi = BarIndex();
+fvb = FirstVisibleValue( bi );
+lvb = LastVisibleValue( bi );
+
+rightstrength = Param( "Number Of Right Bars", 10, 3, 50, 1 );
+leftstrength = Param( "Number Of Left Bars", 10, 5, 50, 1 );
+
+
+pk = PH == HHV( PH, leftstrength ) AND Ref( HHV( PH, rightstrength ), rightstrength ) < PH;
+tr = PL == LLV( PL, leftstrength ) AND Ref( LLV( PL, rightstrength ), rightstrength ) > PL;
+pkl = PH == HHV( PH, leftstrength );
+trl = PL == LLV( PL, leftstrength );
+
+for( i = 0; i < 3; i++ )
+{
+    VarSet( "px" + i, ValueWhen( pk, bi, i ) );
+    VarSet( "tx" + i, ValueWhen( tr, bi, i ) );
+    VarSet( "ph" + i, ValueWhen( pk, H, i ) );
+    VarSet( "tl" + i, ValueWhen( tr, L, i ) );
+}
+
+ll = tr AND tl1 < tl2;
+hl = tr AND tl1 > tl2;
+hh = pk AND ph1 > ph2;
+lh = pk AND ph1 < ph2;
+dt = pk AND ph1 == ph2;
+db = tr AND tl1 == tl2;
+
+PlotShapes( shapeSmallCircle * trl, colorGreen, 0, PL, -10 );
+PlotShapes( shapeSmallCircle * pkl, colorRed, 0, PH, 10 );
+PlotShapes( shapeSmallCircle * tr, colorBrightGreen, 0, PL, -10 );
+PlotShapes( shapeSmallCircle * pk, colorOrange, 0, PH, 10 );
+
+doubleTopThreshold = 0.75 * Ref( ATR( 20 ), -1 );
+doubleTop = pk && abs( ph1 - ph2 ) < doubleTopThreshold;
+
+doubleBottomThreshold = 0.75 * Ref( ATR( 20 ), -1 );
+doubleBottom = tr && abs( tl1 - tl2 ) < doubleBottomThreshold;
+
+for( i = lvb; i > fvb; i-- )
+{
+    sz = 8;
+
+    // troughs
+    if( ll[i] )
+    {
+        str = "LL";
+        PlotTextSetFont( str, "Arial Black", sz, i, L[i], ColorRGB( 0, 250, 0 ), colorDefault, -30 );
+    }
+
+    if( hl[i] )
+    {
+        str = "HL";
+        PlotTextSetFont( str, "Arial Black", sz, i, L[i], ColorRGB( 0, 250, 0 ), colorDefault, -30 );
+    }
+
+    if( db[i] )
+    {
+        str = "DB";
+        PlotTextSetFont( str, "Arial Black", sz, i, L[i], ColorRGB( 0, 250, 0 ), colorDefault, -30 );
+    }
+
+    //peaks
+    if( hh[i] )
+    {
+        str = "HH";
+        PlotTextSetFont( str, "Arial Black", sz, i, H[i], ColorRGB( 250, 0, 0 ), colorDefault, 20 );
+    }
+
+    if( lh[i] )
+    {
+        str = "LH";
+        PlotTextSetFont( str, "Arial Black", sz, i, H[i], ColorRGB( 250, 0, 0 ), colorDefault, 20 );
+    }
+
+    if( dt[i] )
+    {
+        str = "DT";
+        PlotTextSetFont( str, "Arial Black", sz, i, H[i], ColorRGB( 250, 0, 0 ), colorDefault, 20 );
+    }
+
+    if( doubleTop[i] )
+    {
+        str = "Double Top";
+        PlotTextSetFont( str, "Arial Black", sz, i, H[i], ColorRGB( 250, 125, 0 ), colorDefault, 40 );
+    }
+    
+     if( doubleBottom[i] )
+    {
+        str = "Double Bottom";
+        PlotTextSetFont( str, "Arial Black", sz, i, L[i], ColorRGB( 250, 125, 0 ), colorDefault, -40 );
+    }
+    
+}
+
+Buy = tr;
+Sell = pk;
+//Buy = ExRemSpan(Buy, 5);
+//Sell = ExRemSpan(Sell, 5);
+ 
+FILTER = doubleTop OR doubleBottom; 
+AddColumn( Close, "Close" );
+
+PlotShapes( IIF( buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, PL); 
+PlotShapes( IIF( sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, PH); 
+
+writeif( highest( doubleTop ) == 1, "\nAmiBroker has detected some possible Double Top patterns for " + name() + "\n\nLook for TAG on the price chart.", "\n\nThere are no double top patterns for " + name() );
+writeif( highest( doubleBottom ) == 1, "\n\nAmiBroker has detected some possible Double Bottom patterns for " + name() + "\n\nLook for TAG on the price chart.", "\nThere are no double top patterns for " + name() );
+
+_SECTION_END();

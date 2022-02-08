@@ -1,0 +1,108 @@
+#include_once <FireAnt.h>
+
+_SECTION_BEGIN("Price");
+if (Nz(VarGet("runonce_Basic")) == 0) {
+VarSet("runonce_Basic",1);
+CellHeight = Param("Cell Height",20,5,200,1); 
+CellWidth = Param("Cell Width",120,5,200,1); 
+PanelYoffset = Param("Cell Row Offset (px)",15,0,Status("pxheight"),1); 
+PanelXoffset = Param("Cell Column Offset (px)",10,0,Status("pxwidth"),1); 
+FontRatio = Param("Font: CellHeight ratio",2,1,20,0.1);
+Triger =1;
+
+
+Column_Begin( "1");
+Triger = TriggerCell( "TEST MODUS OFF", "TEST MODUS ON", colorRed, colorBrightGreen, colorBlack);
+Column_End( );
+
+TestModus = Nz(StaticVarGet("TestModus"), OFF);
+
+TP = LastValue(C);
+PV = StaticVarGet("PV");
+PV = IIf(IsNull(PV), V, PV);
+
+if (Triger == 0) 
+{
+	if ( GetCursorMouseButtons() & 9 ) 
+	{ 
+		TP = Nz(GetCursorYPosition(),Nz(StaticVarGet("TestPrice"),LastValue(C)));
+
+		StaticVarSet("TestPrice", TP);
+	}
+	else { 
+		TP = Nz(StaticVarGet("TestPrice"),LastValue(C));
+	}
+}
+else
+	TP = LastValue(C); 
+
+if (TestModus==OFF) {
+	TP = LastValue(C);
+	PC = C;
+	PH = H;
+	PL = L;
+	PTypical = Avg;
+}
+else {
+	PC = FA_Price(3);
+	PH = FA_Price(1);
+	PL = FA_Price(2);
+	PTypical = FA_Price(5);
+}
+
+StaticVarSet("TP", TP );
+StaticVarSet("PC", PC );
+StaticVarSet("PL", PL );
+StaticVarSet("PH", PH );
+StaticVarSet("PTypical", PTypical);
+
+SetChartOptions(0,chartShowArrows|chartShowDates);
+
+}
+
+_SECTION_END();
+
+_SECTION_BEGIN("RSI Candle");
+
+Period = Param("RSI Period", 14, 7, 50, 1);
+RSI_Value = FA_RSI(Period);
+
+OverOverBought = RSI_Value >= 85;
+OverBought = RSI_Value <85 AND RSI_Value >=75;
+NearOverBought = RSI_Value <75 AND RSI_Value >= 60;
+TopMiddleZone = RSI_Value <60 AND RSI_Value > 50;
+BottomMiddleZone = RSI_Value < 50 AND RSI_Value > 40;
+NearOverSold = RSI_Value <=40 AND RSI_Value > 25;
+OverSold = RSI_Value <=25 AND RSI_Value > 15;
+OverOverSold = RSI_Value <= 15;
+
+BarColor = IIf(OverOverBought, colorDarkRed,
+IIf( OverBought, colorRed,
+IIf( NearOverBought, colorPink,
+
+IIf( TopMiddleZone, colorOrange,
+IIf( BottomMiddleZone, colorYellow,
+
+IIf( NearOverSold, colorBlue,
+IIf( OverSold, colorGreen,
+IIf( OverOverSold, colorBrightGreen, colorWhite))))))));
+
+_SECTION_END();
+
+_SECTION_BEGIN("Price");
+
+SetChartOptions(0,chartShowArrows|chartShowDates);
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, PH, PL, PC, SelectedValue( ROC( PC, 1 ) ) ));
+Plot( PC, "", BarColor, styleCandle); 
+
+Buy = Ref(RSI_Value, -1) < 25 AND RSI_Value>25;
+Sell = Ref(RSI_Value, -1) > 75 AND RSI_Value<75;
+
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+ 
+
+PlotShapes( IIF( Buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, PL); 
+PlotShapes( IIF( Sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, PH); 
+
+_SECTION_END();

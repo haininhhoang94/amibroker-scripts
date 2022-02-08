@@ -1,0 +1,30 @@
+#include_once <FireAnt.h>
+_SECTION_BEGIN("Buy & Sell Pressure");
+if (Nz(VarGet("runonce_BSPressure")) == 0) {
+VarSet("runonce_BSPressure",1);
+SetChartOptions(0,chartShowArrows|chartShowDates);
+PC = StaticVarGet("PC" );
+PC = IIf(IsNull(PC), C, PC);
+PL = StaticVarGet("PL" );
+PL = IIf(IsNull(PL), L, PL);
+PH = StaticVarGet("PH" );
+PH = IIf(IsNull(PH), H, PH);
+PV = StaticVarGet("PV" );
+PV = IIf(IsNull(PV), V, PV);
+diff = Pressure(PH, PL, PC, PV);
+diffcolor = IIf(diff>0,colorGreen,colorRed);
+SetBarFillColor( diffcolor ); 
+PlotOHLC(0,diff,0,diff,"Force",IIf(diff>0,colorLime,colorOrange), styleCandle | styleOwnScale ) ;
+_SECTION_END();
+_SECTION_BEGIN("Title");
+
+forceColor = SelectedValue(diffcolor);
+
+if( Status("action") == actionIndicator ) 
+(
+Title = EncodeColor(colorWhite)+ "Buy & Selll Pressure" + " - " +  EncodeColor(colorYellow)+ Name() + " - " + EncodeColor(colorWhite)+ Interval(2) + EncodeColor(colorYellow) +
+ " - " + Date() +" - " + EncodeColor(colorWhite) + "Raw Buying pressure ="+ EncodeColor(colorLime)  + WriteVal(nbf)+ EncodeColor(colorWhite) +
+" -"+ EncodeColor(colorWhite) + " Raw Selling pressure ="+ EncodeColor(colorRed) +  WriteVal(nsf)+ EncodeColor(colorWhite) +
+" -"+ EncodeColor(colorWhite) + " Force ="+ EncodeColor(forceColor) + WriteVal(diff));
+}
+_SECTION_END(); 

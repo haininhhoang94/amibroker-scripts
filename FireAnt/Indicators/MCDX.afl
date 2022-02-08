@@ -1,0 +1,43 @@
+_SECTION_BEGIN("MCDX");
+if (Nz(VarGet("runonce_MCDX")) == 0) {
+VarSet("runonce_MCDX",1);
+
+RequestTimedRefresh( 1 );
+
+PC = StaticVarGet("PC" );
+PC = IIf(IsNull(PC), C, PC);
+RSIBaseBanker       = Param("Banker Base",50,10,100,1,0);
+RSIPeriodBanker     = Param ("Banker RSI Period", 50, 10, 100,1,0);
+RSIBaseHotMoney     = Param("Hot Money RSI Base", 30,10,100,1,0);
+RSIPeriodHotMoney   = Param("Hot Money RSI Period", 40,10,100,1,0);
+SensitivityBanker   = Param("Sensitivity Banker", 1.5, 0.1,10, 0.1,0);
+SensitivityHotMoney = Param("Sensitivity Hot Money", 0.7, 0.1, 10, 0.1,0);
+
+mcdx_Retailer = 20;
+mcdx_Banker   = FA_MCDX(RSIPeriodBanker,  SensitivityBanker, RSIBaseBanker, mcdx_Retailer);
+mcdx_HotMoney = FA_MCDX(RSIPeriodHotMoney, SensitivityHotMoney, RSIBaseHotMoney, mcdx_Retailer);
+
+BankerColor = ParamColor("Banker color", colorRed);
+HotMoneyColor = ParamColor("HotMoney color", colorYellow);
+RetailerColor = ParamColor("Retailer color", colorGreen);
+
+Buy = Cross(mcdx_Banker, MA(mcdx_Banker,5)) AND Cross(mcdx_Banker,5);
+Sell = Cross(MA(mcdx_Banker,5),mcdx_Banker) AND Cross(15,mcdx_Banker);
+
+//Buy = ExRem(Buy, Sell);
+//Sell = ExRem(Sell, Buy);
+
+
+shape = Buy * shapeUpArrow + Sell * shapeDownArrow; 
+
+PlotShapes( shape, IIf( Buy, colorGreen, colorRed ) );
+Plot(mcdx_Banker,"Banker", BankerColor , styleHistogram, minvalue=0, maxvalue = 20, XShift = 0, Zorder = 0, width = 10 );
+Plot(MA(mcdx_Banker,5),"Banker Signal", BankerColor , styleLine, minvalue=0, maxvalue = 20, XShift = 0, Zorder = 0, width = 1 );
+FA_PLOT2(mcdx_HotMoney, mcdx_Banker, "HotMoney", HotMoneyColor, styleHistogram, 0, mcdx_Retailer, 0, 0, 10);
+FA_PLOT3(mcdx_Retailer, mcdx_HotMoney, mcdx_Banker,"Retailer", RetailerColor , styleHistogram, 0, mcdx_Retailer, 0, 0, 10 );
+Plot(5,"", colorBlack , styleLine, minvalue=5, maxvalue = 5, XShift = 0, Zorder = 1, width = 1 );
+Plot(10,"", colorBlack , styleLine, minvalue=5, maxvalue = 5, XShift = 0, Zorder = 1, width = 1 );
+Plot(15,"", colorBlack , styleLine, minvalue=5, maxvalue = 5, XShift = 0, Zorder = 1, width = 1 );
+
+}
+_SECTION_END();

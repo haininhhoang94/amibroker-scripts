@@ -1,0 +1,75 @@
+
+_SECTION_BEGIN( "Trend" );
+smoother = Param( "Trend Smoother", 5, 5, 20 );
+upColor = ParamColor( "Up Trend Color", colorGreen );
+downColor = ParamColor( "Down Trend Color", colorRed );
+_SECTION_END();
+ 
+_SECTION_BEGIN( "Signal" );
+distributionColor = ParamColor( "Distribution Zone Color", colorBlue );
+accumulationColor = ParamColor( "Accumulation Zone Color", colorWhite );
+entryColor = ParamColor( "Entry Signal Color", colorBrightGreen );
+profitTakeColor = ParamColor( "Profit Zone Color", colorYellow );
+exitColor = ParamColor( "Exit Signal Color", colorRed );
+
+//lookBack = Param( "LookBack Period", 50, 0, 200, 1 );
+//pricePeriod = Param( "Price Period", 16, 0, 200, 1 );
+//percent = 100;
+
+supportLineColor = colorGreen ;
+supportResistanceLineStyle = styleThick | 8 | styleNoLabel;
+resistanceLineColor = colorRed ;
+
+overBought = 200;
+warningLevel = 220;
+overSold = -overBought;
+
+_SECTION_END();
+ 
+_SECTION_BEGIN( "Entry/Exit" );
+SetChartOptions(0,chartShowArrows|chartShowDates);
+SetBarsRequired(sbrAll,sbrAll);
+SetChartBkColor(colorBlack);
+GraphXSpace=20;
+GfxSetBkMode(0);
+
+hlc2 = ( H + L + C * 2 ) / 4;
+emaHLC2 = EMA( hlc2, Smoother );
+stDevHLC2 = StDev( hlc2, Smoother );
+signalRatio = IIf (stDevHLC2==0, overBought, ( hlc2 - emaHLC2 ) * overBought / (stDevHLC2+0.000001));
+signalRatio = EMA( signalRatio, Smoother );
+trading = EMA( signalRatio, Smoother );
+signalTrading = EMA( trading, Smoother );
+oo = IIf( trading < signalTrading, trading, signalTrading );
+cc = IIf( trading < signalTrading, signalTrading, trading );
+
+barColor = IIf( Ref( oo, -1 ) < oo AND cc < Ref( cc, -1 ), upcolor, IIf( trading > signalTrading, upcolor, downcolor ) );
+PlotOHLC( oo, oo, cc, cc, "Flower", barColor, styleCandle );  // When value is negative it is accumulation, when positive it is distribution ( 200 lines are limtits to watch )
+
+Buy = Cross( trading, OverSold );
+Sell = Cross( OverBought, trading );
+
+PlotShapes ( IIf( Buy, shapeUpArrow, shapeNone ) , EntryColor, layer = 0, yposition = IIf(oo>cc, cc, oo));
+PlotShapes ( IIf( Sell, shapeDownArrow, shapeNone ) , ExitColor, layer = 0, yposition = IIf(oo>cc, oo, cc));
+
+_SECTION_END();
+ 
+_SECTION_BEGIN( "Overbought/Oversold/Warning Detail" );
+
+warningRatio = IIf (stDevHLC2==0, warningLevel, ( hlc2 - emaHLC2 ) * warningLevel / (stDevHLC2+0.000001));
+warningRatio = EMA( warningRatio, Smoother );
+warning = EMA( warningRatio, Smoother );
+
+
+
+warningShape = IIf( warning >= OverBought OR warning <= OverSold, shapeHollowSmallCircle, shapeNone );
+warningColor = IIf( warning >= warningLevel, ProfitTakeColor, IIf( warning >=OverBought, DistributionColor, AccumulationColor));
+
+PlotShapes( warningShape, warningColor, 0, warning, 0 );
+
+Plot( OverBought, "", colorGreen, styleDashed | styleNoLabel );
+Plot( 0, "", colorWhite, styleDashed | styleNoLabel );
+Plot( OverSold, "", colorRed, styleDashed | styleNoLabel ); 
+
+
+_SECTION_END();

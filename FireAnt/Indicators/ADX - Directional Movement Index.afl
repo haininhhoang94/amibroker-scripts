@@ -1,0 +1,44 @@
+_SECTION_BEGIN("ADX");
+period = Param("Periods", 14, 2, 200, 1 );
+trendLevel = Param("ADX Trend Level", 25, 10, 200, 1 );
+EMAPeriod = Param("EMA Period", 50, 10, 200, 1 );
+
+fa_ADX = ADX(period);
+fa_DMIPlus = PDI(period);
+fa_DMIMinus = MDI(period);
+fa_DMIP = IIf(fa_DMIPlus >= fa_DMIMinus, fa_DMIPlus, fa_DMIMinus);
+fa_DMIM = IIf(fa_DMIMinus >= fa_DMIPlus, fa_DMIPlus, fa_DMIMinus);
+
+Plot(fa_ADX, _DEFAULT_NAME(), ParamColor( "ADX color", colorYellow ), ParamStyle("ADX style", styleThick ) , Null, Null, 0, 5);
+Plot( fa_DMIPlus, "+DI", ParamColor( "+DI color", colorBlue ), ParamStyle("+DI style") );
+
+Plot( fa_DMIMinus, "-DI", ParamColor( "-DI color", colorRed ), ParamStyle("-DI style") );
+PlotOHLC( fa_DMIP , fa_DMIP, fa_DMIM, fa_DMIM, "",  IIf(fa_DMIPlus>=fa_DMIMinus, colorGreen, colorOrange )  ,  styleNoLabel | styleCloud );
+PlotOHLC( fa_DMIM, fa_DMIM, 0, 0, "",  colorGrey40  ,  styleNoLabel | styleCloud );
+Plot( trendLevel, "", colorWhite, styleLine, Null, Null, 0, 10);
+
+Choice = ParamList("Method", "ADX_EMA|ADX_DMI|FireAnt", 0);
+
+if (Choice == "ADX_EMA") {
+	Buy = Cross(fa_ADX, trendLevel) AND C > EMA(C, EMAPeriod) AND fa_DMIPlus > fa_DMIMinus;
+	Sell = Cross(fa_ADX, trendLevel) AND C < EMA(C, EMAPeriod) AND fa_DMIPlus < fa_DMIMinus;
+}
+else if (Choice == "ADX_DMI") {
+	Buy = Cross(fa_DMIPlus, fa_DMIMinus) AND fa_ADX > trendLevel ;
+	Sell = Cross(fa_DMIMinus, fa_DMIPlus) AND fa_ADX > trendLevel;
+}
+else {
+	Buy = Cross(fa_ADX, trendLevel) AND fa_DMIMinus < fa_DMIPlus;
+	Sell = Ref(fa_ADX, -1) == HHV(fa_ADX, Period)  AND fa_DMIMinus < fa_DMIPlus AND Ref(fa_ADX, -1) > fa_ADX AND fa_ADX >trendLevel;
+}
+Buy = ExRemSpan(Buy, 5);
+Sell = ExRemSpan(Sell, 5);
+//Buy = ExRem(Buy, Sell);
+
+//Sell = ExRem(Sell, Buy);
+printf("%g %g", Buy, Sell);
+
+PlotShapes( IIF( Buy, shapeUpArrow, shapeNone ), colorYellow, 0, yposition = fa_ADX); 
+PlotShapes( IIF( Sell, shapeDownArrow, shapeNone ), colorWhite, 0, yposition = fa_ADX); 
+
+_SECTION_END();

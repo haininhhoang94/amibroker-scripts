@@ -1,0 +1,32 @@
+_SECTION_BEGIN("Wolfstein Trending");
+range = Param("Periods", 14, 2, 200, 1 );
+strong = Param("Strong Level", 40, 20, 60, 1 );
+weak = Param("Weak Level", 20, 10, 25, 1 );
+fa_adx = ADX(range);
+
+Plot( fa_adx, "ADX", ParamColor( "ADX color", colorBlue ), ParamStyle("ADX style", styleThick ) );
+
+trending2 = fa_adx>=strong;
+trending1 = fa_adx>=weak AND fa_adx<strong;
+sideway  = fa_adx<weak;
+
+Title = EncodeColor(colorBrightGreen) + "Wolfstein Trending : "+ EncodeColor(colorBrightGreen) +  Name() + " " 
+
++ EncodeColor(colorYellow) + "\nTrending Now: " + EncodeColor(colorYellow) +WriteIf(trending1  ,"Weak Trending" ," ") + EncodeColor(colorRed)
+   +WriteIf(sideway ,"No Trend" ," " )  + EncodeColor(colorGreen)
+   +WriteIf(trending2 ,"Strong Trending" ," " ) ;
+
+
+Buy = trending2; 
+Sell = sideway; 
+
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+
+PlotShapes( IIF( buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, fa_adx); 
+PlotShapes( IIF( sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, fa_adx); 
+
+Plot(strong, "", IIf(trending1,colorYellow, IIf(trending2, colorGreen, colorRed)), styleLine | styleThick);
+Plot(weak, "", IIf(trending1,colorYellow, IIf(trending2, colorGreen, colorRed)), styleLine | styleThick);
+
+_SECTION_END();

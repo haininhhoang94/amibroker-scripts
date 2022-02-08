@@ -1,0 +1,21 @@
+_SECTION_BEGIN("Money Flow Detector");
+if (Nz(VarGet("runonce_BandarDetector")) == 0) {
+	VarSet("runonce_BandarDetector",1);
+	RequestTimedRefresh( 1 );
+	PC = StaticVarGet("PC" );
+	PC = IIf(IsNull(PC), C, PC);
+	PV = StaticVarGet("PV" );
+	PV = IIf(IsNull(PV), V, PV);
+
+	BDIn = IIf(PC>O,PV,0)*PC; 
+	BDOut = IIf(PC<O,PV,0)*PC;
+	Period = Param("Money Flow Period", 50, 3, 200,1,0);
+	BDAcc = Sum(BDIn, Period); 
+	BDDic = Sum(BDout,Period); 
+	BD = BDAcc- BDDic;
+
+	ColorBD=IIf( BD>O, colorBrightGreen ,colorRed) ;
+
+	Plot(BD, "Money Flow Detector",colorBD, styleHistogram| styleThick) ;
+}
+_SECTION_END();

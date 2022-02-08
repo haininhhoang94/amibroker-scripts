@@ -1,0 +1,17 @@
+PriceChange = ROC(C, 1);
+VolumeChange = ROC(V,1); 
+
+Filter = C > 5 AND V>100000;
+
+RS_Point = (ROC(C,63)*.4 + ROC(C,126)* .2 + ROC(C,189) *.2 + ROC(C,252) * .2) * 100;
+RS_PointRef = Ref(RS_Point, -1);
+
+AddTextColumn( FullName(), "Full name", 77 , colorDefault );
+AddColumn(IIf(IsNull(RS_Point),0,RS_Point), "RS Points",1.0, IIf(RS_Point>RS_PointRef, colorGreen, IIf(RS_Point==RS_PointRef, colorWhite, colorRed)));
+AddColumn(IIf(IsNull(RS_PointRef),0,RS_PointRef), "RS Points Previous",1.0);
+AddColumn( C, "Close", 1.2, IIf(PriceChange>0, colorGreen, colorRed), colorDefault, 84);
+AddColumn(PriceChange , "Close Price Change (%)", 1.2, colorDefault, colorDefault, 84);
+AddColumn(V,"Volume",1.0, IIf(PriceChange>0, colorGreen, colorRed), colorDefault, 84);
+AddColumn(VolumeChange , "Volume Change (%)", 1.2, colorDefault, colorDefault, 84);
+AddColumn(MA(V,5) , "Average Volume 5 Bars", 1.2, colorDefault, colorDefault, 84);
+SetSortColumns ( -4, 1);

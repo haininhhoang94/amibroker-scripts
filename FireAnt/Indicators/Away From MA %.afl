@@ -1,0 +1,33 @@
+_SECTION_BEGIN("% Away from MA");
+
+if (Nz(VarGet("runonce_AwayFromMA")) == 0) {
+	VarSet("runonce_AwayFromMA",1);
+	RequestTimedRefresh( 1 );
+	PC = StaticVarGet("PC" );
+	PC = IIf(IsNull(PC), C, PC);
+	
+	SetChartBkGradientFill( ParamColor("Top Color", GetChartBkColor() - 56),ParamColor("Bottom Color", GetChartBkColor() - 56));
+	periods = Param( "MA Period",50 , 5, 200, 1 );
+	highDistance = Param( "Min distance (%) from MA", 10 , 5, 200, 1 );
+	priceChange = Param( "Min price change (%)", 15 , 5, 200, 1 );
+	priceChangePerriod = Param( "Price change period", 20 , 5, 200, 1 );
+	maxSession = Param("Nr of sessions to compare", 200, 20, 200, 1);
+	
+	distance=100*(PC-MA(PC,periods))/MA(PC,periods);
+	
+	Title = EncodeColor(GetChartBkColor() - 56)+ Name()+ " - " + Date()+ " - " + EncodeColor(GetChartBkColor() - 56)+ "% Away from MA("+periods+")"+ 
+	EncodeColor(GetChartBkColor() - 56)+ " = "+ WriteVal(distance,1.2);
+
+	Plot(distance,"% Away from MA("+periods+")",colorGreen , ParamStyle( "Style",  styleThick, maskHistogram ), 2 );
+	
+	Buy = distance <= LLV(distance, maxSession) AND distance <-highDistance AND abs(ROC(PC, priceChangePerriod)) > priceChange;
+	Sell = distance >= HHV(distance, maxSession) AND distance > highDistance AND abs(ROC(PC, priceChangePerriod)) > priceChange;
+
+	Buy = ExRemSpan(Buy, 20);
+	Sell = ExRemSpan(Sell, 20);
+ 
+
+	PlotShapes( IIF( Buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, distance); 
+	PlotShapes( IIF( Sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, distance); 
+}
+_SECTION_END();

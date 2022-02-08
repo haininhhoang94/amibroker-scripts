@@ -1,0 +1,57 @@
+// General Information of a stock, should place this in all chart/pane
+// 1. Symbol Name
+// General Information
+// 2. Full Name
+// 3. Website
+// 4. Market
+// 5. Industry
+// OLHC Data
+
+// Title
+printf("<b>" + EncodeColor(colorRed) + Name() + "\n" + "</b>");
+printf("\n");
+
+// Info
+printf("<b>" + "Company Name:  " + "<i>" + GetFnData("FullName") + "</i>" + "\n" + "</b>");
+printf("<b>" + "Website:  " + "<i>" + GetFnData("WebID") + "</i>" + "\n" + "</b>");
+printf("<b>" + "Market:  " + "<i>" + MarketID(1) + "</i>" + "\n" + "</b>");
+printf("<b>" + "Industry:  " + "<i>" + IndustryID(1) + "</i>" + "\n" + "</b>");
+printf("\n");
+
+// OLHC
+printf(EncodeColor(colorOrange) + "<b>" + "Open:  " + Open + "\n" + "</b>");
+printf(EncodeColor(ColorRGB(101, 204, 169)) + "<b>" + "High:  " + High + "\n" + "</b>");
+printf(EncodeColor(colorRed) + "<b>" + "Low:  " + Low + "\n" + "</b>");
+printf(EncodeColor(ColorRGB(187, 123, 189)) + "<b>" + "Close:  " + Close + "\n" + "</b>");
+printf("\n");
+
+// EMA
+// Color helper
+function color_helper(main_value, reference)
+{
+	trigger = (main_value - reference);
+	trigger = LastValue(trigger);
+	if (trigger >= 0)
+	{
+		if (trigger > 0)
+			color = EncodeColor(colorGreen);
+		else
+			color = EncodeColor(colorOrange);
+	}
+	else
+		color = EncodeColor(colorRed);
+		
+	return color;
+}
+
+
+Close_Arr = ParamField("Close", 3);
+printf(color_helper(Close_Arr, EMA( Close_Arr, 5 )) + "<b>" + "EMA5:  " + EMA( Close_Arr, 5 ) + "\n" + "</b>");
+printf(color_helper(Close_Arr, EMA( Close_Arr, 10 )) + "<b>" + "EMA10:  " + EMA( Close_Arr, 10 ) + "\n" + "</b>");
+printf(color_helper(Close_Arr, EMA( Close_Arr, 15 )) + "<b>" + "EMA15:  " + EMA( Close_Arr, 15 ) + "\n" + "</b>");
+printf(color_helper(Close_Arr, EMA( Close_Arr, 20 )) + "<b>" + "EMA20:  " + EMA( Close_Arr, 20 ) + "\n" + "</b>");
+printf(color_helper(Close_Arr, EMA( Close_Arr, 40 )) + "<b>" + "EMA40:  " + EMA( Close_Arr, 40 ) + "\n" + "</b>");
+printf(color_helper(Close_Arr, EMA( Close_Arr, 60 )) + "<b>" + "EMA60:  " + EMA( Close_Arr, 60 ) + "\n" + "</b>");
+printf(color_helper(Close_Arr, EMA( Close_Arr, 80 )) + "<b>" + "EMA80:  " + EMA( Close_Arr, 80 ) + "\n" + "</b>");
+printf(color_helper(Close_Arr, EMA( Close_Arr, 100 )) + "<b>" + "EMA100:  " + EMA( Close_Arr, 100 ) + "\n" + "</b>");
+printf(color_helper(Close_Arr, EMA( Close_Arr, 200 )) + "<b>" + "EMA200:  " + EMA( Close_Arr, 200 ) + "\n" + "</b>");

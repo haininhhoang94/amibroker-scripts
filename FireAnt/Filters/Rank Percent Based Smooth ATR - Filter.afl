@@ -1,0 +1,34 @@
+/*
+Percent Rank based ATR and colored candles according to the high volatility or low volatility zones.
+High volatility zones are colored blue and low volatile zones are colored red. Exploration feature is added to find increasing/decreasing Percent rank with values
+*/
+_SECTION_BEGIN("Percent Rank Based ATR");
+periods = Param( "Periods", 20, 3, 200, 1 );
+PRB_ATR=PercentRank(LinearReg(ATR(periods),periods),periods);
+
+color = IIf(PRB_ATR > Ref(PRB_ATR,-1) OR PRB_ATR == 100,colorBlue,colorRed);
+prbstatus = WriteIf(PRB_ATR > Ref(PRB_ATR,-1) OR PRB_ATR == 100,"Increasing","Decreasing");
+
+Plot( PRB_ATR, "PRB-ATR", color, styleLine | styleThick );
+
+Sell = PRB_ATR > Ref(PRB_ATR,-1) AND PRB_ATR == 100 AND V > 100000;
+Buy = PRB_ATR < Ref(PRB_ATR,-1) AND PRB_ATR == 0 AND V > 100000;
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+ 
+
+PlotShapes( IIF( buy, shapeUpArrow, shapeNone ), colorGreen , layer = 0, yposition = PRB_ATR); 
+PlotShapes( IIF( sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, yposition = PRB_ATR);
+
+_SECTION_END();
+
+_SECTION_BEGIN("Exploration");
+
+Filter = Buy OR Sell;
+AddColumn(Close,"LTP",1.2);
+AddColumn(PRB_ATR,"PRB_ATR",1.2,colorWhite,color);
+AddColumn(V,"Volume",1.0,colorWhite,color);
+
+AddTextColumn(prbstatus,"Status",1,colorWhite,color);
+
+_SECTION_END();

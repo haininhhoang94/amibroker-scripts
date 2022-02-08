@@ -1,0 +1,36 @@
+SetChartOptions(0, chartShowArrows | chartShowDates);
+
+FastMAColor = ParamColor("Fast Group MA Color", colorGreen);
+SlowMAColor = ParamColor("Slow Group MA Color", colorRed);
+
+EMA3 = EMA(C, 3);
+EMA5 = EMA(C, 5);
+EMA8 = EMA(C, 8);
+EMA10 = EMA(C, 10);
+EMA12 = EMA(C, 12);
+EMA15 = EMA(C, 15);
+
+EMA30 = EMA(C, 30);
+EMA35 = EMA(C, 35);
+EMA40 = EMA(C, 40);
+EMA45 = EMA(C, 45);
+EMA50 = EMA(C, 50);
+EMA60 = EMA(C, 60);
+
+/*Plot(EMA3, _DEFAULT_NAME(), FastMAColor, styleLine);
+Plot(EMA5, _DEFAULT_NAME(), FastMAColor, styleLine);
+Plot(EMA8, _DEFAULT_NAME(), FastMAColor, styleLine);
+Plot(EMA10, _DEFAULT_NAME(), FastMAColor, styleLine);
+Plot(EMA12, _DEFAULT_NAME(), FastMAColor, styleLine);
+Plot(EMA15, _DEFAULT_NAME(), FastMAColor, styleLine);*/
+
+PlotOHLC(EMA3,EMA3, EMA15, EMA15, "Fast Cloud",iif(EMA3>EMA15, colorBrightGreen,colorGreen),styleCloud );
+
+/*Plot(EMA30, _DEFAULT_NAME(), SlowMAColor, styleLine);
+Plot(EMA35, _DEFAULT_NAME(), SlowMAColor, styleLine);
+Plot(EMA40, _DEFAULT_NAME(), SlowMAColor, styleLine);
+Plot(EMA45, _DEFAULT_NAME(), SlowMAColor, styleLine);
+Plot(EMA50, _DEFAULT_NAME(), SlowMAColor, styleLine);
+Plot(EMA60, _DEFAULT_NAME(), SlowMAColor, styleLine);*/
+
+PlotOHLC(EMA30,EMA30, EMA60, EMA60, "Slow Cloud",iif(EMA30>EMA60, colorRose, colorRed),styleCloud );

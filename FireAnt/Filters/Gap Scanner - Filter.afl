@@ -1,0 +1,34 @@
+_SECTION_BEGIN("GAP SCANNER");
+
+/*********** Volume Down for Chart and Exploration ***********************/
+IsFuture = ParamToggle("Future Symbol?", "No|Yes", 0);
+
+VolumeChange = ROC(V,1); 
+if (IsFuture)
+	OIChange = ROC(OI,1); 
+PriceChange = ROC(C,1);
+
+
+ydayhigh = Ref(H, -1);
+ydaylow = Ref(L, -1);
+todayopen = O;
+
+gapupvar = ydayhigh < todayopen;
+gapdownvar = ydaylow > todayopen;
+
+Filter = (gapupvar OR gapdownvar) AND V >= MA(V, 5)*1.15 AND V>=50000 AND Ref(V, -1) > 10000;
+
+AddTextColumn(WriteIf(gapupvar,"GAP UP", "GAP DOWN") , "GAP", 6.2, colorDefault, IIf(gapupvar,colorGreen, colorOrange), 84);
+AddColumn( O, "Open", 1.2, colorDefault, colorDefault, 84);
+AddColumn( C, "Close", 1.2, IIf(PriceChange>0, colorGreen, colorRed), colorDefault, 84);
+AddColumn( Ref(L,-1), "Previous Low", 1.2, colorDefault, colorDefault, 84);
+AddColumn(PriceChange , "Close Price Change (%)", 1.2, colorDefault, colorDefault, 84);
+AddColumn(V , "Volume", 1.0, IIf(VolumeChange>0, colorGreen, colorRed), colorDefault, 84);
+AddColumn(ref(V, -1)  , "Previous Volume", 1.0, colorDefault, colorDefault, 84);
+AddColumn(VolumeChange , "Volume Change (%)", 1.2, colorDefault, colorDefault, 84);
+AddColumn(MA(V,5) , "Average Volume 5 Bars", 1.2, colorDefault, colorDefault, 84);
+if (IsFuture)
+	AddColumn(OIChange , "OI Change (%)", 1.2, colorDefault, colorDefault, 84);
+
+
+_SECTION_END();

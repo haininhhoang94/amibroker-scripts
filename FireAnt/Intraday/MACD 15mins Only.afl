@@ -1,0 +1,35 @@
+//SetChartBkColor(ParamColor("Panel Color",colorLightGrey));
+//SetChartBkGradientFill(ParamColor("Upper Chart",colorLightGrey),ParamColor("Lower Chart",colorLightGrey));
+
+_SECTION_BEGIN("MACD 15P");
+r1 = Param( "Fast avg", 12, 2, 200, 1 );
+r2 = Param( "Slow avg", 26, 2, 200, 1 );
+r3 = Param( "Signal avg", 9, 2, 200, 1 );
+
+
+M = MACD(r1, r2);
+S = Signal(r1,r2,r3);
+
+Hi = IIf(M > S, M, S);
+Lo = IIf(M < S, M, S);
+
+COLOR = IIf(Ref(S,1) > Ref(M,1), colorRed, colorGreen);
+//COLOR = IIf(K > D AND (K > 80 OR D > 80) OR D > K AND (K < 20 OR D <20), colorLightGrey, COLOR);
+
+PlotOHLC(Lo,Hi,Lo,Hi,"",COLOR, styleNoLabel | styleCloud);
+
+Buy=Cross(M,S)  AND ROC(C,1)>0 AND C > MA(C,15);
+Sell=Cross(S,M)  AND ROC(C,1)<0 AND C < MA(C,15);
+
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+ 
+
+PlotShapes(0.4*shapeUpTriangle*Buy, colorGreen, 0, M, -15 );
+PlotShapes(0.4*shapeDownTriangle*Sell, colorYellow, 0, M, -15);
+
+
+//===================================
+
+_SECTION_END();
+

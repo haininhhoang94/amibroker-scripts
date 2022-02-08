@@ -1,0 +1,195 @@
+_SECTION_BEGIN("Order");
+#include_once <Order.h>
+if (Nz(VarGet("runonce")) == 0) {
+VarSet("runonce",1);
+RequestTimedRefresh( 1 );
+
+file = "Orders.txt";
+
+unit = 1000;
+shiftH = 50;
+shiftV = 10;
+barShift = 5;
+pixelPerChar = 10;
+
+orderColor = ParamColor("Order color", colorGreen);
+positionColor = ParamColor("Position color", colorYellow);
+
+orderLineType = ParamList("Order line style", "Dot|Solid|Dash", 0);
+if( orderLineType == "Solid" ) orderLine  = 0;
+else if( orderLineType == "Dash" ) orderLine = 1;
+else orderLine = 2;
+
+if (orderLine == 0) orderLineLabel = styleLine;
+else if (orderLine == 1) orderLineLabel = styleDashed;
+else orderLineLabel = styleDots;
+
+
+positionLineType = ParamList("Position line style", "Dot|Solid|Dash", 1);
+
+if( positionLineType == "Dot" ) positionLine = 2;
+else if( positionLineType == "Dash" ) positionLine = 1;
+else positionLine = 0;
+
+if (positionLine == 0) positionLineLabel = styleLine;
+else if (positionLine == 1) positionLineLabel = styleDashed;
+else positionLineLabel = styleDots;
+
+orderShow = ParamToggle("Show order", "NO | YES", True);
+positionShow = ParamToggle("Show position", "NO | YES", True);
+
+
+ 
+// open file
+fh = fopen( file, "r" );
+
+if( fh )
+{
+	while( ! feof( fh ) ) {
+		// read a line of text
+   		line = fgets( fh ); 
+
+       if( line == "" )
+       {
+       	printf("Done");
+          break;
+       }
+		// line = StrReplace(line, " ",""); // remove all space
+		orderName = StrExtract( line, 0 ); // order or position
+
+		GfxSelectFont("Tahoma", pixelPerChar, 400);
+		GfxSetBkColor( GetChartBkColor());
+
+		if (orderName == "order" AND orderShow == True) {
+			orderID = StrExtract( line, 1 ); // ID
+			//instrument = StrExtract( line, 2 ); // Instrument
+			orderSymbol = StrExtract( line, 3 ); // Symbol	
+			orderQtyText = StrExtract( line, 4 ); // Qty
+			orderSide = StrExtract( line, 5 ); // side: buy or sell
+			orderType = StrExtract( line, 6 ); // Type: limit, stop, market, stoplimit
+			orderFilledQtyText = StrExtract( line, 7 ) ; // FilledQty
+			//AvgPrice = StrExtract( line, 8 ) ; // averageprice
+
+			limitPrice = StrExtract( line, 9 ); // limitprice
+			stopPrice = StrExtract( line, 10 ); // stopprice
+			orderStatusText	= StrExtract( line, 11 ); // status
+			orderUnitText = StrExtract( line, 12 ); //unit
+
+			if (orderSymbol == Name() AND (orderType == "limit" OR orderType == "stop" OR orderType == "stoplimit")) {
+				orderQty = StrToNum(orderQtyText);
+
+				orderFilledQty = StrToNum(orderFilledQtyText);
+				orderRemainingQty = orderQty - orderFilledQty;
+				//statusText = "inactive";
+				if ((orderRemainingQty > 0) AND (orderStatusText != "cancelled") AND (orderStatusText != "rejected") AND (orderStatusText != "inactive")) {
+					   
+					orderText = OrderSide + " " + OrderType; 
+
+					qtyText = orderText + ": " + NumToStr(orderRemainingQty, 1.0, False);
+					
+					unit = StrToNum(orderUnitText);
+					
+
+					if (orderType == "stoplimit") {
+						if (orderStatusText == "placing") {
+							qtyText = qtyText + ", Limit Price: " + NumToStr(StrToNum(limitPrice)/unit,1.2);
+							priceText = stopPrice; 
+						}
+						else
+							priceText = limitPrice;
+					}
+					else if (orderType == "limit") {				
+						priceText = limitPrice;
+					}
+					else {
+						priceText = stopPrice; 
+					}
+					
+					qtyText = " " + qtyText + " ";
+					
+					
+					
+					price = StrToNum(priceText )/unit;
+				
+					
+					orderY = GfxConvertValueToPixelY( price);
+  					orderYL = GfxConvertValueToPixelY( price) - shiftV; 
+					orderYR = orderYL + 2 * shiftV;
+					OrderX = GfxConvertBarToPixelX( 0 );
+					orderXL = GfxConvertBarToPixelX( barShift );
+
+					orderXR =	Status("pxchartright");
+
+					GfxSetTextColor( orderColor );				
+					
+					GfxMoveTo(orderX, orderY);
+					GfxSelectPen( orderColor , 1, orderLine);
+					GfxLineTo(orderXR,orderY);
+
+					GfxDrawText( qtyText, orderXL , orderYL , orderXR, orderYR, 0 | 4 | 32 );
+					
+					Plot(price,orderText,orderColor , styleNoLine | styleNoRescale );
+
+				} // end orderRemainingQty 
+			} // end if orderSymbol 
+
+		} // end if orderName
+       else if (orderName == "position" AND positionShow) {
+			positionID = StrExtract( line, 1 ); // ID
+			//instrument = StrExtract( line, 2 ); // Instrument
+       	positionSymbol = StrExtract( line, 3 ); // Symbol	
+			positionQtyText = StrExtract( line, 4 ); // Qty
+			positionSide = StrExtract( line, 5 ); // side: buy or sell
+
+       	positionAvgPriceText = StrExtract( line, 6 ) ; // averageprice
+
+			positionProfitText	= StrExtract( line, 7 ); // profit/loss
+			positionUnitText = StrExtract( line, 8 ); //unit
+
+			if (positionSymbol == Name()) {
+				profit = StrToNum(positionProfitText)/1000000; // profit/los in million vnd
+				if (profit >= 0) 
+					positionProfitText = " est. profit: " + profit + " mil";
+				else
+					positionProfitText = " est. loss: " + abs(profit) + " mil";
+
+				unit = StrToNum(positionUnitText);
+				positionText = " " + positionSide + ": " + positionQtyText + "," + positionProfitText + " "; 
+
+				price = StrToNum(positionAvgPriceText)/unit;
+				//positionTextLen = pixelPerChar * StrLen(positionText);
+				fvb = Status("firstvisiblebar"); 
+				positionY = GfxConvertValueToPixelY( price);
+
+				positionYL = GfxConvertValueToPixelY( price) - shiftV; 
+				positionYR = positionYL + 2*shiftV;
+				positionX = GfxConvertBarToPixelX( 0 );
+
+				positionXL = GfxConvertBarToPixelX( barShift  );
+				positionXR =	Status("pxchartright");
+				
+				GfxSetTextColor( positionColor );
+
+				GfxMoveTo(positionX, positionY);
+				GfxSelectPen( positionColor , 1, positionLine);
+				GfxLineTo(positionXR,positionY);
+
+	
+				GfxDrawText( positionText , positionXL , positionYL , positionXR, positionYR, 0 | 4 | 32 );
+
+				Plot(price,positionSide,positionColor , styleNoLine | styleNoRescale);
+			}
+		}
+	}  // end while      
+ 
+	fclose( fh );
+}
+else
+{
+    printf( "ERROR: file can not be opened" );
+}
+
+}
+
+
+_SECTION_END();

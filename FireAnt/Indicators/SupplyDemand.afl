@@ -1,0 +1,34 @@
+_SECTION_BEGIN("Supply Demand");
+if (Nz(VarGet("runonce_SupplyDemand")) == 0) {
+	VarSet("runonce_SupplyDemand",1);
+	NN = Name() +  "_CC";
+
+	SellQuantity = Nz(Foreign(NN,"O",0),0);
+	BuyQuantity = Nz(Foreign(NN,"C",0),0);
+
+	NetQuantity = BuyQuantity  - SellQuantity;
+
+	sellText = "Demand Quantity:";
+	buyText = "Supply Quantity:";
+	netText = "Quantity: ";
+
+	
+	netQuantity = BuyQuantity - SellQuantity;
+	totalQuantity = BuyQuantity + SellQuantity + abs(netQuantity);
+	netText = WriteIf(netQuantity>=0, "Net Demand ", "Net Sypply ") + netText;
+
+	DemandColor = ParamColor("Demand Color", colorGreen );
+	SupplyColor = ParamColor("Sypply Color", colorRed );
+	netDemandColor = ParamColor("Net Demand Color", colorBlue );
+	netSupplyColor = ParamColor("Net Sypply Color", colorYellow);
+	
+	netColor = IIf(NetQuantity > 0, netDemandColor, IIf(NetQuantity <0, netSupplyColor, colorWhite));
+	
+	PlotOHLC(BuyQuantity,0, BuyQuantity, 0,  "Demand" , IIf(NetQuantity > 0, DemandColor,DemandColor), styleCandle);
+	PlotOHLC(BuyQuantity+abs(netQuantity),0, BuyQuantity+abs(NetQuantity), 0,  "" , IIf(NetQuantity > 0, netColor, netColor), styleCandle);
+	PlotOHLC(totalQuantity,0,totalQuantity,0,"Sypply", IIf(NetQuantity > 0, SupplyColor, SupplyColor), styleCandle);
+
+	Title = Name() + " - " + Date()+ " - " + "Supply & Demand: " + "    " + sellText+WriteVal(SellQuantity,1.0) + "    "
+	+ buyText+WriteVal(BuyQuantity,1.0) + "    " + netText+WriteVal(abs(netQuantity),1.0);
+}
+_SECTION_END();

@@ -1,0 +1,26 @@
+_SECTION_BEGIN("Active Buy Sell");
+if (Nz(VarGet("runonce_ActiveBuySell")) == 0) {
+	VarSet("runonce_ActiveBuySell",1);
+	
+	
+	NN = Name() +  "_AC";
+
+	ActiveSell = Nz(Foreign(NN,"O",0),0);
+	ActiveBuy = Nz(Foreign(NN,"C",0),0);
+
+	NetActiveVolume = ActiveBuy  - ActiveSell;
+	
+
+	netActiveBuyColor = ParamColor("Net Active Buy Volume Color", colorGreen );
+	netActiveSellColor = ParamColor("Net Active Sell Volume Color", colorRed );
+	totalVolumeColor = ParamColor("Total Volume Color", colorYellow);
+	
+	PlotOHLC(ActiveBuy,0, ActiveBuy, 0,  "Active Buy Volume" , IIf( NetActiveVolume  > O, netActiveBuyColor, IIf( NetActiveVolume<0, netActiveSellColor, colorWhite) ), styleCandle);
+	PlotOHLC(V,0,V,0,"Volume", IIf(NetActiveVolume  > O, totalVolumeColor, totalVolumeColor), styleCandle);
+
+	Title = Name() + " - " + Date()+ " - " + "Active buy & sell: " + "    " + "SellVolume:"+WriteVal(ActiveSell,1.0)+"    "+"BuyVolume:"+WriteVal(ActiveBuy,1.0)+"    "
+	+ "SellVolume:"+WriteVal(100*ActiveSell/V,1.0)+"%" + "    " + "BuyVolume:"+WriteVal(100*ActiveBuy/V,1.2)+"%"+"    " + "TotalVolume:"+WriteVal(V,1.0);
+
+	
+}
+_SECTION_END();

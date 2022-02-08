@@ -1,0 +1,20 @@
+_SECTION_BEGIN("ATR");
+if (Nz(VarGet("runonce_ATR")) == 0) {
+	VarSet("runonce_ATR",1);
+	RequestTimedRefresh( 1 );
+	PC = StaticVarGet("PC");
+	PC = IIf(IsNull(PC), C, PC);
+	PH = StaticVarGet("PH");
+	PH = IIf(IsNull(PH), H, PH);
+	PL = StaticVarGet("PL");
+	PL = IIf(IsNull(PL), L, PL);
+	
+	Period = Param( "Periods", 15, 1, 200, 1 );
+	Factor = Param( "ATR Factor", 1, 1, 4, 1 );
+	SellStopLoss = Factor * FA_ATR(Period) + PH;
+	BuyStopLoss = PL - Factor * FA_ATR(Period);
+	
+	Plot( SellStopLoss, "Sell Stoploss", ParamColor( "Sell Stoploss Color", colorRed ), ParamStyle("Sell Stoploss Style", styleLine) );
+	Plot( BuyStopLoss, "Buy Stoploss", ParamColor( "Buy Stoploss Color", colorGreen ), ParamStyle("Buy Stoploss Style", styleLine) );
+}
+_SECTION_END();

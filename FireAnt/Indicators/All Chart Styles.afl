@@ -1,0 +1,113 @@
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g,Close %g (%.1f%%) Vol =" +WriteVal( V, 1.0 ) +"\n{{VALUES}}", O, H, L, C, 
+SelectedValue( ROC( C, 1 )))  + 
+EncodeColor(colorBlack) 	
+);
+
+
+ema13 = eMA (C,13);
+Plot (ema13,"EM13",colorRed, styleLine);
+
+ema26 = eMA (C,26);
+Plot (ema26,"EM26",colorBlue, styleLine);
+
+
+r1 = 12; 
+r2 = 26;
+r3 = 9; 
+
+m01=MACD(r1,r2);
+s01=Signal(r1,r2,r3);
+
+hist = m01-s01; 
+
+buyhist = hist > Ref(hist,-1);
+sellhist = hist < Ref(hist,-1);
+stay = hist == Ref(hist,-1);
+
+buyema = ema13  > Ref(ema13 ,-1);
+sellema =ema13  < Ref(ema13 ,-1);
+
+
+allowbuy = buyhist AND buyema;
+notallowbuy = sellhist AND sellema;
+
+
+color = IIf(allowbuy, colorgreen, IIf (notallowbuy, colorRed, IIf (stay,colorGreen,colorblue)));
+
+
+
+_SECTION_BEGIN("Price Chart");
+
+bgTop = ParamColor("BgTop",    colorWhite);
+bgBot = ParamColor("BgBottom", colorWhite);
+SetChartBkGradientFill( bgTop ,bgBot, colorWhite);
+
+pStyle = ParamList("Price Style", "Candle|Solid Candle|Bar|Line|Heikin-Ashi",2);
+cBull = ParamColor("Price Bull", colorLime);
+CBear = ParamColor("Price Bear", colorRed);
+cLine = ParamColor("Price Line", colorWhite);
+
+
+SetChartOptions(0,chartShowArrows|chartShowDates);
+_N(Title = StrFormat("{{NAME}}- {{INTERVAL}} {{DATE}} O= %g, H= %g, L= %g, C= %g (%.1f%%) V= " +WriteVal( V, 1.0 ) +"\n{{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 )) ));
+
+ThisStyle = styleCandle;
+ThisTitle = "";
+
+_O=O; _C=C; _H=H; _L=L;
+
+ThisColor = color;
+
+
+switch (pStyle )
+{
+
+  case "Solid Candle":   
+        SetBarFillColor( ThisColor ); 
+        break;
+
+
+  case "Bar": 
+       ThisStyle = styleBar;
+       break;
+
+  case "Line": 
+      ThisStyle = styleLine;
+      ThisColor = cLine;
+       break;
+
+
+  case "Heikin-Ashi": 
+       _C = (O+H+L+C)/4; 
+		  _O = AMA( Ref( _C, -1 ), 0.5 ); 
+       _H = Max( H, Max( _C, _O ) ); 
+       _L = Min( L, Min( _C, _O ) ); 
+
+       ThisColor = IIf(_C >= _O,CBull, CBear);
+       SetBarFillColor( ThisColor );
+ 
+       ThisColor = IIf(_C >= _O,cLine, cLine);
+		  ThisTitle = "Heikin-Ashi";
+       break;
+
+  default:   
+        SetBarFillColor( ThisColor ); 
+        ThisColor = cLine;
+
+       break;
+
+}
+
+PlotOHLC( _O, _H, _L, _C, ThisTitle, ThisColor, ThisStyle); 
+GraphXSpace = 8;
+
+Buy = Cross(ema13, ema26);
+Sell = Cross(ema26, ema13) ;   
+Buy = ExRem(Buy, Sell);
+Sell = ExRem(Sell, Buy);
+ 
+
+PlotShapes( IIF( buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, L); 
+PlotShapes( IIF( sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, H ); 
+
+_SECTION_END();

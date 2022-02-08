@@ -1,0 +1,59 @@
+MinPrice = Param("Min Price", 5, 1, 300, 1);
+MinVolume = Param("Min Volume", 50000, 10000, 100000000, 10000);
+VolumeChange = Param("Min Volume Increase vs MA5", 15, 0, 500, 1);
+
+CondBuyMA = C > MA (C, 21);
+CondBuyMACD = (MACD (12,26) > Signal (12,26,9)) AND (MACD (12, 26) > Ref (MACD (12, 26), -1));
+CondBuyROC = ROC(C,1) > 1;
+
+hhv10 = HHV (Ref (C, -1), 10);
+llv10 = LLV (Ref (C, -1), 10);
+CondPriceRange = hhv10 < 1.05*llv10; 
+
+llv21 = LLV (Ref (C,-1), 21);
+CondBuyMaxPrice = llv21*1.15 > C;
+
+CondBuyMFI = MFI (14) > Ref (MFI (14), -1);
+
+CondBuyBB = BBandTop (C, 15, 2) > BBandTop ( Ref (C, -1), 15, 2);
+
+CondPrice = C > MinPrice;
+CondVolume = V > MinVolume;
+
+CondSellMA = C < MA (C, 21);
+CondSellMACD = (MACD (12,26) < Signal (12,26,9)) AND (MACD (12, 26) < Ref (MACD (12, 26), -1));
+CondSellROC = ROC(C,1) < -1;
+
+hhv21 = HHV (Ref (C,-1), 21);
+CondSellMinPrice = hhv21*0.85 < C;
+
+CondSellMFI = MFI (14) < Ref (MFI (14), -1);
+
+CondSellBB = BBandTop (C, 15, 2) < BBandTop ( Ref (C, -1), 15, 2);
+
+CondPrice = C > MinPrice;
+CondVolume = V > MinVolume AND V > MA(V, 5)*(1+VolumeChange/100);
+
+Buy = CondBuyMA AND CondBuyMACD AND CondBuyROC AND CondPriceRange AND CondBuyMaxPrice AND CondBuyMFI AND CondBuyBB AND CondPrice AND CondVolume;
+Sell = CondSellMA AND CondSellMACD AND CondSellROC AND CondPriceRange AND CondSellMinPrice AND CondSellMFI AND CondSellBB AND CondVolume;
+TradingText = WriteIf(Buy,"Buy","Sell");
+colorTrading = IIf(Buy, colorBrightGreen, colorRed);
+colorTradingBackground = IIf(Buy, colorGrey40, colorAqua);
+Filter = Buy OR Sell;
+
+
+AddColumn(Ref(C,-1), "Previous Price", 1.2);
+AddColumn(C, "Price", 1.2, IIf(C>Ref(C,-1),colorGreen,colorRed));
+AddColumn(ROC(C,1), "Price Change (%)", 1.2);
+AddColumn(Ref(V,-1), "Previous Volume", 1.0);
+AddColumn(V,"Volume",1.0,IIf(V>Ref(V,-1),colorGreen,colorRed));
+AddColumn(ROC(V,1), "Volume Change (%)", 1.2);
+AddColumn(MA(V,5), "MA5 of Volume", 1.0);
+AddColumn((V-MA(V,5))*100/MA(V,5), "Volume Change vs MA5 (%)", 1.2);
+AddTextColumn(TradingText,"Trading",1,colorTrading, colorTradingBackground);
+SetSortColumns ( -5, 1);
+
+//AddColumn(V,"Volume",1,IIf(V>Ref(V,-1),colorGreen,colorRed));
+//AddTextColumn(TKStatus,"BBand",1,colorWhite,TKColor);
+
+ 

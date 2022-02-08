@@ -1,0 +1,30 @@
+_SECTION_BEGIN("AccDist");
+if (Nz(VarGet("runonce_AccDist")) == 0) {
+	VarSet("runonce_AccDist",1);
+	RequestTimedRefresh( 1 );
+	PC = StaticVarGet("PC");
+	PV = StaticVarGet("PV");
+
+	Period = Param("Smoothing Period", 9,3,100,1,0);
+	
+	Type = ParamList("Type", "SMA,EMA,DEMA,TEMA,Wilders,WMA,LSMA,TSF");
+
+	m = 1;
+
+	if( Type == "SMA" ) 		m = 1; 
+	if( Type == "EMA" ) 		m = 2; 
+	if( Type == "DEMA" ) 		m = 3;
+	if( Type == "TEMA" ) 		m = 4;
+	if( Type == "Wilders" ) 	m = 5;
+	if( Type == "WMA" ) 		m = 6;
+	if( Type == "LSMA" ) 		m = 7;
+	if( Type == "TSF" ) 		m = 8;
+	
+
+	fa_AD = FA_AccDist();
+	fa_AD_Smooth = FA_Signal(fa_AD, Period, m);
+
+	Plot( fa_AD, _DEFAULT_NAME(), ParamColor("AD Color", colorGreen ), ParamStyle("AD Style", styleLine) );
+	Plot( fa_AD_Smooth, "Smoothed AD", ParamColor("Smoothing Color", colorRed ), ParamStyle("Smoothing Style", styleLine) );
+}
+_SECTION_END();

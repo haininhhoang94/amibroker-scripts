@@ -1,0 +1,31 @@
+_SECTION_BEGIN("Price");
+SetChartOptions(0,chartShowArrows|chartShowDates);
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ) ));
+Plot( C, "Close", ParamColor("Color", colorDefault ), styleNoTitle | ParamStyle("Style") | GetPriceStyle() ); 
+_SECTION_END();
+
+_SECTION_BEGIN("MA");
+P = ParamField("Price field",-1);
+Periods = Param("Periods", 15, 2, 300, 1, 10 );
+Plot( MA50 = MA( P, Periods ), _DEFAULT_NAME(), ParamColor( "Color", colorCycle ), ParamStyle("Style") ); 
+
+MCH1=TimeFrameGetPrice( "H", in15Minute, -1);
+MCH2=TimeFrameGetPrice( "H", in15Minute, -2);
+MCL1=TimeFrameGetPrice( "L", in15Minute, -1);
+MCL2=TimeFrameGetPrice( "L", in15Minute, -2);
+MCO1=TimeFrameGetPrice( "O", in15Minute, -1);
+MCO2=TimeFrameGetPrice( "O", in15Minute, -2);
+MCC1=TimeFrameGetPrice( "C", in15Minute, -1);
+MCC2=TimeFrameGetPrice( "C", in15Minute, -2);
+
+
+Buy = MA50 <= MCH1 AND MA50 >= MCL1 AND MCO1 > MA50 AND MCO1 > MCC1 AND MA50 < MCC1 AND O < C AND MCH1 < H;
+Sell = MA50 <= MCH1 AND MA50 >= MCL1 AND MCO1 < MA50 AND MCO1 < MCC1 AND MA50 > MCC1 AND O > C AND MCL1 > L;
+ 
+
+shape = Buy * shapeUpArrow + Sell * shapeDownArrow;	//Set Order Shape
+
+	//Plot Order Signal
+PlotShapes( shape, IIf( Buy, colorGreen, colorRed), 0,IIf( Buy, High, Low), 15);
+
+_SECTION_END();

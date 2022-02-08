@@ -1,0 +1,26 @@
+_SECTION_BEGIN("KST Indicator");
+Avg1 = Sum(ROC(C,24),9)/9;
+Avg2 = Sum(ROC(C,18),9)/9;
+Avg3 = Sum(ROC(C,12),6)/6;
+Avg4 = Sum(ROC(C,6),6)/6;
+KST = 4*Avg1 + 3*Avg2 + 2*Avg3 + Avg4;
+MAPeriod = Param("Signal Period", 9, 3, 20, 1,0);
+//MAPeriod = Optimize("MA Period",9,3,30,1);  
+MA1 = MA(KST, MAPeriod);
+Plot(kst,"KST" ,ParamColor("KST Color",colorRed),ParamStyle("KST Style",styleThick));
+Plot(MA1,"Signal" ,ParamColor("Signal Color",colorBlue),ParamStyle("Signal Style",styleDots));
+
+Buy = Cross(KST,MA1);
+Sell = Cross(MA1,KST);
+
+Buy=ExRem(Buy,Sell);
+Sell=ExRem(Sell,Buy);
+
+Short = Sell;
+Cover = Buy;
+
+PlotShapes( Buy * shapeSmallUpTriangle + Sell * shapeSmallDownTriangle, IIf( Buy, colorBlue, colorRed ) );  
+
+Plot(0,"",ParamColor("Zero Line",colorGrey50), ParamStyle("Zero Line Style",styleLine));
+
+_SECTION_END();

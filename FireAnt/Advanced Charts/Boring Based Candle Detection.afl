@@ -1,0 +1,125 @@
+#include_once <FireAnt.h>
+
+_SECTION_BEGIN("Price");
+if (Nz(VarGet("runonce_Basic")) == 0) {
+VarSet("runonce_Basic",1);
+CellHeight = Param("Cell Height",20,5,200,1); 
+CellWidth = Param("Cell Width",120,5,200,1); 
+PanelYoffset = Param("Cell Row Offset (px)",15,0,Status("pxheight"),1); 
+PanelXoffset = Param("Cell Column Offset (px)",10,0,Status("pxwidth"),1); 
+FontRatio = Param("Font: CellHeight ratio",2,1,20,0.1);
+Triger =1;
+
+
+Column_Begin( "1");
+Triger = TriggerCell( "TEST MODUS OFF", "TEST MODUS ON", colorRed, colorBrightGreen, colorBlack);
+Column_End( );
+
+TestModus = Nz(StaticVarGet("TestModus"), OFF);
+
+TP = LastValue(C);
+PV = StaticVarGet("PV");
+PV = IIf(IsNull(PV), V, PV);
+
+if (Triger == 0) 
+{
+	if ( GetCursorMouseButtons() & 9 ) 
+	{ 
+		TP = Nz(GetCursorYPosition(),Nz(StaticVarGet("TestPrice"),LastValue(C)));
+
+		StaticVarSet("TestPrice", TP);
+	}
+	else { 
+		TP = Nz(StaticVarGet("TestPrice"),LastValue(C));
+	}
+}
+else
+	TP = LastValue(C); 
+
+if (TestModus==OFF) {
+	TP = LastValue(C);
+	PC = C;
+	PH = H;
+	PL = L;
+	PTypical = Avg;
+}
+else {
+	PC = FA_Price(3);
+	PH = FA_Price(1);
+	PL = FA_Price(2);
+	PTypical = FA_Price(5);
+}
+
+StaticVarSet("TP", TP );
+StaticVarSet("PC", PC );
+StaticVarSet("PL", PL );
+StaticVarSet("PH", PH );
+StaticVarSet("PTypical", PTypical);
+
+SetChartOptions(0,chartShowArrows|chartShowDates);
+
+
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) Vol " +WriteVal( PV, 1.0 ) +" {{VALUES}}", O, PH, PL, PC, SelectedValue( ROC( PC, 1 )) ));
+
+}
+
+_SECTION_END();
+
+
+_SECTION_BEGIN("Boring Based Candle Detection");
+
+rallyCandle = O<PC;
+rallyCandle1 = Ref(O,-1) < Ref(C,-1);
+rallyCandle2 = Ref(O,-2) < Ref(C,-2);
+rallyCandle3 = Ref(O,-3) < Ref(C,-3);
+rallyCandle4 = Ref(O,-4) < Ref(C,-4);
+rallyCandle5 = Ref(O,-5) < Ref(C,-5);
+declineCandle = O > PC;
+declineCandle1 = Ref(O,-1) > Ref(C,-1);
+declineCandle2 = Ref(O,-2) > Ref(C,-2);
+declineCandle3 = Ref(O,-3) > Ref(C,-3);
+declineCandle4 = Ref(O,-4) > Ref(C,-4);
+declineCandle5 = Ref(O,-5) > Ref(C,-5);
+
+bodyRate = Param("Proportion of body (%)", 45, 1, 200, 1);
+bodyRate = bodyRate / 100;
+baseCandle = abs(O-PC)/(0.000001+abs(PH-PC)) < bodyRate;
+baseCandle1 = abs(Ref(O,-1) - Ref(C,-1))/(0.000001+abs(ref(H,-1)-Ref(C,-1))) < bodyRate;
+baseCandle2 = abs(Ref(O,-2) - Ref(C,-2))/(0.000001+abs(ref(H,-2)-Ref(C,-2))) < bodyRate;
+baseCandle3 = abs(Ref(O,-3) - Ref(C,-3))/(0.000001+abs(ref(H,-3)-Ref(C,-3))) < bodyRate;
+baseCandle4 = abs(Ref(O,-4) - Ref(C,-4))/(0.000001+abs(ref(H,-4)-Ref(C,-4))) < bodyRate;
+baseCandle5 = abs(Ref(O,-5) - Ref(C,-5))/(0.000001+abs(ref(H,-5)-Ref(C,-5))) < bodyRate;
+
+BarColor = IIf( baseCandle, colorBlue, IIf(rallyCandle, colorGreen, colorRed));
+
+Buy = rallyCandle AND baseCandle1 AND rallyCandle2 AND rallyCandle3 AND baseCandle4 AND rallyCandle5;
+Sell = declineCandle AND baseCandle1 AND declineCandle2 AND declineCandle3 AND baseCandle4 AND declineCandle5;
+
+Choice = ParamList("Method", "Standard|Extend", 0);
+
+if (Choice == "Standard") {
+	Buy = rallyCandle AND baseCandle1 AND rallyCandle2;
+	Sell = declineCandle AND baseCandle1 AND declineCandle2;
+}
+else {
+	Buy = rallyCandle AND baseCandle1 AND rallyCandle2 AND rallyCandle3 AND baseCandle4 AND rallyCandle5;
+	Sell = declineCandle AND baseCandle1 AND declineCandle2 AND declineCandle3 AND baseCandle4 AND declineCandle5; 
+}
+
+	
+
+Buy = ExRemSpan(Buy, 5);
+Sell = ExRemSpan(Sell, 5);
+PlotShapes( IIF( Buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, L); 
+PlotShapes( IIF( Sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, H); 
+
+PriceStyle = GetPriceStyle();
+PriceStyleOpt = ParamStyle("Price Style")|PriceStyle;
+
+if (PriceStyle==styleCandle)
+	Plot( PC, "", BarColor, styleNoTitle | PriceStyleOpt ); 
+else
+	Plot( PC, "", BarColor, PriceStyleOpt);
+
+_SECTION_END();
+

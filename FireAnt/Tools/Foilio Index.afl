@@ -1,0 +1,41 @@
+_SECTION_BEGIN("Folio Index");
+SetChartOptions(0,chartShowArrows|chartShowDates);
+
+_N( SymbolList = ParamStr("SymbolList", "VNINDEX") );
+IncludeSymbol = ParamToggle("Include current symbol:","YES | NO",defaultval=0 );
+
+i = 0;
+if (IncludeSymbol == 1) {
+	SumO = O*V;
+	SumH = H*V;
+	SumL = L*V;
+	SumC = C*V;
+	SumV = V;
+}
+else {
+	SumO = O - O;
+	SumH = H - H;
+	SumL = L - L;
+	SumC = C - C;
+	SumV = V - V;
+}
+
+while (StrExtract(SymbolList, i) != "")
+{
+	SetForeign( StrExtract(SymbolList, i) );
+	SumO = SumO + O*V;
+	SumH = SumH + H*V;
+	SumL = SumL + L*V;
+	SumC = SumC + C*V;
+	SumV = SumV + V;
+	RestorePriceArrays();
+	i = i + 1;
+}
+
+
+Color = ParamColor( "Color", colorDefault );
+Style = ParamStyle( "Style", styleCandle , maskPrice );
+
+PlotOHLC( SumO/SumV, SumH/SumV, SumL/SumV, SumC/SumV, "Folio Index", Color, style );
+
+_SECTION_END();

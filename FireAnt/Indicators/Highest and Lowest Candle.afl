@@ -1,0 +1,63 @@
+_SECTION_BEGIN("Price");
+SetChartOptions(0,chartShowArrows|chartShowDates);
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} " + DateTimeFormat("%d-%m-%Y", _DT(date())) + " Open %g, Hi %g, Lo %g, Close %g (%.2f%%), vs T+3 (%.1f | %.2f%%) {{VALUES}}", O, H, L, C, SelectedValue( ROC( C, 1 ) ), C-Ref(C,-3), ROC( C, 3 ) ));
+Plot( C, "Close", ParamColor("Color", colorDefault ), styleNoTitle | ParamStyle("Style") | GetPriceStyle() ); 
+_SECTION_END();
+
+_SECTION_BEGIN("Highest and Lowest Candle");
+
+GfxSelectFont("Times New Roman", 10, 400); 
+GfxSetBkMode(1);
+GfxSetTextColor( colorWhite);
+y = Status("pxcharttop")+20;
+y_space = 15;
+xx = 5;
+GfxTextOut(FullName(), xx, y );
+
+function findHighAndLowValue(TimeRange)
+{
+	if (TimeRange==20) {
+		Y_Distance = 0.1;
+	}
+	else if (TimeRange==50) {
+		Y_Distance = 0.4;
+	}
+	else if (TimeRange==100) {
+		Y_Distance = 0.7;
+	}
+	else {
+		Y_Distance = 1;
+	}
+	HH = HHV(Ref(H, -1), TimeRange);
+	LL = LLV(Ref(L, -1), TimeRange);
+
+	HHPercent = (C - HH)*100/HH;		
+	LLPercent = (C - LL)*100/LL;
+	
+	L_H_Ratio = IIf (HHPercent==0, -1, IIf(LLPercent >= 0, LLPercent, abs(LLPercent))/IIf(HHPercent < 0, abs(HHPercent), HHPercent));
+		
+	bi = BarIndex();
+	highestBar = ValueWhen(H == LastValue(HH), bi);	
+	
+	i = LastValue(highestBar);
+	
+	PlotText( "H" + NumToStr(TimeRange, 1.0), i, H[ i ]+Y_Distance, colorYellow, colorDefault, 30);	
+	PlotShapes((BarIndex()==i)*shapeDownTriangle, colorRed, 0, High, -20);
+
+	lowestBar = ValueWhen(L == LastValue(LL), bi);	
+	i = LastValue(lowestBar);
+	
+	PlotText( "L" + NumToStr(TimeRange, 1.0), i, L[ i ]-Y_Distance, colorRed, colorDefault, -30);
+	PlotShapes((BarIndex()==i)*shapeUpTriangle, colorGreen, 0, Low, -10);
+	
+	return "H = " + NumToStr(HH, 1.2) + " (" + NumToStr(HHPercent, 1.2) + "%) | L = " + NumToStr(LL, 1.2) + " (" + NumToStr(LLPercent, 1.2) + "%)" + WriteIf (L_H_Ratio==-1,""," | Ratio L/H: " + NumToStr(L_H_Ratio, 1.2));	
+}
+
+GfxTextOut("200 Days: " + findHighAndLowValue(200), xx ,  y + 4*y_space); // y_space);
+GfxTextOut("100 Days: " + findHighAndLowValue(100), xx , y + 3*y_space);
+GfxTextOut("50 Days: " + findHighAndLowValue(50), xx , y + 2*y_space);
+GfxTextOut("20 Days: " + findHighAndLowValue(20), xx , y + y_space);
+bi = BarIndex();
+cprice = C;
+PlotShapes(shapeDigit3*(bi == (BarCount - 4)), colorYellow, 0, Low, -20);
+_SECTION_END();

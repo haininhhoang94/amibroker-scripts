@@ -1,0 +1,38 @@
+/*
+This formula allows you to compare 2 stocks by plotting both on the same chart. Select the stock you want to compare to via params.
+*/
+_SECTION_BEGIN("Compare 2 Stocks");
+SetChartOptions( Mode = 0, Flags = 0, gridFlags = chartGridMiddle | chartGridPercent, ymin = 0, ymax = 0, blankbars = 0 );
+
+Ticker = ParamStr("Second Symbol", "VNINDEX" );
+UpClose2 = Foreign(Ticker,"Close") - Ref(Foreign(Ticker,"Close"),-1);
+
+UpClose = Close - Ref(Close,-1); 
+Color = IIf(UpClose > 0, ParamColor("Up Color of First Symbol",colorGreen), ParamColor("Down Color of First Symbol",colorRed)); 
+
+
+Color2 = IIf(UpClose2 > 0, ParamColor("Up Color of Second Symbol",colorBlue), ParamColor("Down Color of Second Symbol",colorYellow));
+
+CF = Foreign(Ticker,"Close");
+i1 = Status("firstvisiblebar");
+
+C1[i1] = 0;
+C2[i1] = 0;
+
+for (i=i1+1; i<BarCount; i++) {
+	C1[i] = (Close[i]-Close[i1])*100/Close[i1];
+	C2[i] = (CF[i]-CF[i1])*100/CF[i1];
+}
+
+Plot(C1,Name(), Color, styleLine, Null, Null, 0, 0, 1 ); 
+Plot(C2,Ticker, Color2, styleLine, Null, Null, 0, 0, 1 ); 
+
+//PlotOHLC(Foreign(Ticker,"Open"), Foreign(Ticker,"High"), Foreign(Ticker,"Low"), Foreign(Ticker,"Close"),"Ticker", Color2, ParamStyle("Style", styleLine |styleOwnScale));
+
+Title = "Compare 2 Stocks - " + EncodeColor(colorGreen) + FullName() + " - Date: " + Date() + EncodeColor(colorRed) + " - O: " + O + " - H: " + H + " - L: " + L + " - C: " + C + " ( " +
+(C - Ref(C,-1)) + " ) V: " + V + EncodeColor(colorBlack) + "\n vs: " + EncodeColor(colorBlue) + Ticker + EncodeColor(colorYellow) + " - O: " + Foreign(Ticker,"Open")
++ " - H: " + Foreign(Ticker,"High") + " - L: " + Foreign(Ticker,"Low")+ " - C: " + Foreign(Ticker,"Close") + " - Vol: " + WriteVal(Foreign(Ticker,"Volume"), 11.0);
+
+//SetChartBkGradientFill( ParamColor("Top Colour", colorWhite),ParamColor("Bottom Colour", colorWhite));
+_SECTION_END();
+

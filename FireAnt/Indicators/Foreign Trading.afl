@@ -1,0 +1,41 @@
+_SECTION_BEGIN("Foreign Trading");
+if (Nz(VarGet("runonce_ForeignTradinge")) == 0) {
+VarSet("runonce_ForeignTradinge",1);
+	NN = Name() +  "_NN";
+	
+	Choice = ParamList("Method", "Volume|Value", 0);
+
+	if (Choice == "Volume") {
+		foreignSellV = Nz(Foreign(NN,"O",0),0);
+		foreignBuyV = Nz(Foreign(NN,"C",0),0);
+		sellText = "Foreign Sell Volume:";
+		buyText = "Foreign Buy Volume:";
+		netText = "Volume: ";
+	}
+	else {
+		foreignSellV = Nz(Foreign(NN,"V",0),0);
+		foreignBuyV = Nz(Foreign(NN,"I",0),0);
+		sellText = "Foreign Sell Value:";
+		buyText = "Foreign Buy Value:";
+		netText = "Value: ";
+	}
+	
+	netForeignV = foreignBuyV - foreignSellV;
+	totalForeignV = foreignBuyV + foreignSellV + abs(netForeignV);
+	netText = WriteIf(netForeignV>=0, "Net Buy ", "Net Sell ") + netText;
+
+	foreignBuyColor = ParamColor("Foreign Buy Color", colorGreen );
+	foreignSellColor = ParamColor("Foreign Sell Color", colorRed );
+	netForeignBuyColor = ParamColor("Net Foreign Buy Color", colorBlue );
+	netForeignSellColor = ParamColor("Net Foreign Sell Color", colorYellow);
+	
+	netForeignColor = IIf(netForeignV > 0, netForeignBuyColor, IIf(netForeignV <0, netForeignSellColor, colorWhite));
+	
+	PlotOHLC(foreignBuyV,0, foreignBuyV, 0,  "Foreign Buy" , IIf(netForeignV > 0, foreignBuyColor,foreignBuyColor), styleCandle);
+	PlotOHLC(foreignBuyV+abs(netForeignV),0, foreignBuyV+abs(netForeignV), 0,  "" , IIf(netForeignV > 0, netForeignColor, netForeignColor), styleCandle);
+	PlotOHLC(totalForeignV,0,totalForeignV,0,"Foreign Sell", IIf(netForeignV > 0, foreignSellColor, foreignSellColor), styleCandle);
+
+	Title = Name() + " - " + Date()+ " - " + "Foreign trading: " + "    " + sellText+WriteVal(foreignSellV,1.0) + "    "
+	+ buyText+WriteVal(foreignBuyV,1.0) + "    " + netText+WriteVal(abs(netForeignV),1.0);
+}
+_SECTION_END();

@@ -1,0 +1,155 @@
+#include_once <FireAnt.h>
+
+_SECTION_BEGIN("Price");
+if (Nz(VarGet("runonce_Basic")) == 0) {
+VarSet("runonce_Basic",1);
+CellHeight = Param("Cell Height",20,5,200,1); 
+CellWidth = Param("Cell Width",120,5,200,1); 
+PanelYoffset = Param("Cell Row Offset (px)",15,0,Status("pxheight"),1); 
+PanelXoffset = Param("Cell Column Offset (px)",10,0,Status("pxwidth"),1); 
+FontRatio = Param("Font: CellHeight ratio",2,1,20,0.1);
+Triger =1;
+
+
+Column_Begin( "1");
+Triger = TriggerCell( "TEST MODUS OFF", "TEST MODUS ON", colorRed, colorBrightGreen, colorBlack);
+Column_End( );
+
+TestModus = Nz(StaticVarGet("TestModus"), OFF);
+
+TP = LastValue(C);
+PV = StaticVarGet("PV");
+PV = IIf(IsNull(PV), V, PV);
+
+if (Triger == 0) 
+{
+	if ( GetCursorMouseButtons() & 9 ) 
+	{ 
+		TP = Nz(GetCursorYPosition(),Nz(StaticVarGet("TestPrice"),LastValue(C)));
+
+		StaticVarSet("TestPrice", TP);
+	}
+	else { 
+		TP = Nz(StaticVarGet("TestPrice"),LastValue(C));
+	}
+}
+else
+	TP = LastValue(C); 
+
+if (TestModus==OFF) {
+	TP = LastValue(C);
+	PC = C;
+	PH = H;
+	PL = L;
+	PTypical = Avg;
+}
+else {
+	PC = FA_Price(3);
+	PH = FA_Price(1);
+	PL = FA_Price(2);
+	PTypical = FA_Price(5);
+}
+
+StaticVarSet("TP", TP );
+StaticVarSet("PC", PC );
+StaticVarSet("PL", PL );
+StaticVarSet("PH", PH );
+StaticVarSet("PTypical", PTypical);
+
+SetChartOptions(0,chartShowArrows|chartShowDates);
+
+
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) Vol " +WriteVal( PV, 1.0 ) +" {{VALUES}}", O, PH, PL, PC, SelectedValue( ROC( PC, 1 )) ));
+
+PriceStyle = GetPriceStyle();
+PriceStyleOpt = ParamStyle("Price Style")|PriceStyle;
+
+if (PriceStyle==styleCandle)
+	Plot( PC, "Close", ParamColor("Color", colorDefault ), styleNoTitle | ParamStyle("Style") | PriceStyleOpt ); 
+else
+	Plot( PC, "Close", IIf( PC >= Ref(PC, -1), colorGreen, colorRed ), PriceStyleOpt);
+
+}
+
+_SECTION_END();
+
+
+_SECTION_BEGIN("Break Resistance");
+
+Period = Param( "Range Period", 20, 10, 100, 1 );
+VolPeriod = Param( "Volume Period", 5, 5, 10, 1 );
+VolFactor = Param( "Volume Speedup Factor (%)", 15, 0, 200, 1 );
+MaxPriceRange = Param( "Max Price Range (%)", 10, 5, 20, 1);
+MinVolume = Param( "Min Volume", 50000, 10000, 100000000, 10000 );
+HighestPrice = Ref( HHV( PH, Period ), -1 );
+LowestPrice = Ref( LLV( PL, Period ), -1 );
+PriceRangeCondition = ( HighestPrice - LowestPrice ) *100.0/ LowestPrice <= MaxPriceRange;
+printf("%g", ( HighestPrice - LowestPrice ) *100.0/ LowestPrice);
+printf("\n%g", MaxPriceRange);
+Breakout = PriceRangeCondition AND PV > EMA( PV, VolPeriod )*(1+VolFactor/100) AND PC > HighestPrice AND PV > MinVolume;
+Breakdown = PriceRangeCondition AND PV > EMA( PV, VolPeriod ) AND PC < LowestPrice AND PV > MinVolume;
+TopLine = ValueWhen( Breakout, HighestPrice, 0 );
+BottomLine = ValueWhen( Breakdown, LowestPrice, 0 );
+Plot( TopLine, "", colorRed, styleNoLine + styleDots );
+Plot( BottomLine, "", colorBlue, styleNoLine + styleDots );
+NewBreakout[0] = 0;
+NewBreakout[1] = 0;
+NewBreakdown[0] = 0;
+NewBreakdown[1] = 0;
+
+for( i = 0; i <= BarCount - 1; i++ )
+{
+    if( Breakout[i] == 1 AND( Breakout[i - 1] == 1 OR Breakout[i - 2] == 1 OR Breakout[i - 3] == 1 ) )
+    {
+        NewBreakout[i] = 0;
+    }
+    else {
+        if( Breakout[i] == 0 )
+        {
+            NewBreakout[i] = 0;
+        }
+        else
+        {
+            NewBreakout[i] = 1;
+        }
+	}
+    if( NewBreakout[i] == 1 )
+    {
+        PlotText( "BU", i, PH[i]+1, colorBlue, colorLightOrange );
+    }
+    
+    
+    if( Breakdown[i] == 1 AND( Breakdown[i - 1] == 1 OR Breakdown[i - 2] == 1 OR Breakdown[i - 3] == 1 ) )
+    {
+        NewBreakdown[i] = 0;
+    }
+    else {
+        if( Breakdown[i] == 0 )
+        {
+            NewBreakdown[i] = 0;
+        }
+        else
+        {
+            NewBreakdown[i] = 1;
+        }
+	}
+    if( NewBreakdown[i] == 1 )
+    {
+        PlotText( "BD", i, PL[i]-1, colorLightOrange, colorBlue );
+    }
+}
+
+//PlotShapes( NewBreakout*shapeUpArrow, colorRed, 0, LowestPrice );
+Filter = NewBreakout OR NewBreakdown;
+AddColumn( Close, "Closed Price" );
+AddColumn( NewBreakout, "Breakout" );
+AddColumn( NewBreakdown, "Breakdown" );
+Buy = NewBreakout;
+Sell = NewBreakdown;
+//Buy = ExRem(Buy, Sell);
+//Sell = ExRem(Sell, Buy);
+ 
+
+PlotShapes( IIF( buy, shapeUpArrow, shapeNone ), colorGreen, layer = 0, PL); 
+PlotShapes( IIF( sell, shapeDownArrow, shapeNone ), colorRed, layer = 0, PH); 
+_SECTION_END();

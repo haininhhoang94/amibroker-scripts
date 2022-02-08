@@ -1,0 +1,20 @@
+_SECTION_BEGIN("Expected Volume");
+#include_once <FireAnt.h>
+Exchange = ParamList("Exchange", "HSX|HNX|UPCOM|FUTURE", 0);
+EV=ExpectedVolume(Exchange);
+
+Choice = ParamList("Coloring Method", "VOLUME|PRICE", 0);
+
+if (Choice == "VOLUME")
+	volumeColor = IIf(V>Ref(V,-1), colorGreen, IIf(V<Ref(V,-1), colorRed, colorWhite));
+else
+	volumeColor = IIf(C>Ref(C,-1), colorGreen, IIf(C<Ref(C,-1), colorRed, colorWhite));
+
+Plot(V, "", volumeColor, styleHistogram, Null, Null, 0, 5);
+Plot(EV, "", colorYellow, styleHistogram);
+
+Title = Name() + " - " + DateTimeFormat( "%x", LastValue( DateTime() )) + " - " + EncodeColor(colorYellow) + "Expected Volume: " + WriteVal(EV, 1.0) + " (" +
+WriteVal(EV*100/Ref(V,-1), 1.2) +"%)"+
+"    " + EncodeColor(colorGreen) + "Volume: " + WriteVal(V, 1.0) + " (" +
+WriteVal(V*100/Ref(V,-1), 1.2) +"%)";
+_SECTION_END();

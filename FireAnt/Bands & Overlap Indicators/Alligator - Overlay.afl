@@ -1,0 +1,28 @@
+// Alligator
+MidPrice=(H+L)/2;
+iPeriod=5;
+Lips = MA(MidPrice, 5);
+for(i=5+1; i<BarCount; i++)
+{
+   iSum = Lips[i-1]*(5-1)+MidPrice[i];
+   Lips[i] = iSum/5;
+}
+Plot(Lips, "Lips", colorGreen, styleLine, Null, Null, 3, 0, 1);
+
+iPeriod=8;
+Teeth = MA(MidPrice, 8);
+for(i=8+1; i<BarCount; i++)
+{
+   iSum = Teeth[i-1]*(8-1)+MidPrice[i];
+   Teeth[i] = iSum/8;
+}
+Plot(Teeth, "Teeth", colorRed, styleLine, Null, Null, 5, 0, 1);
+
+iPeriod=13;
+Jaw = MA(MidPrice, 13);
+for(i=13+1; i<BarCount; i++)
+{
+   iSum = Jaw[i-1]*(13-1)+MidPrice[i];
+   Jaw[i] = iSum/13;
+}
+Plot(Jaw, "Jaw", colorBlue, styleLine, Null, Null, 8, 0, 1);
